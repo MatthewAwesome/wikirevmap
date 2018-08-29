@@ -70,6 +70,7 @@ export default class MapDiv extends Component{
 	    baseLayout:mapLayout, 
 	    baseData:[{type: 'scattergeo'}],
 	    cleared:true, 
+	    width:window.innerWidth, 
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -89,9 +90,21 @@ export default class MapDiv extends Component{
 		this.getFrameData          = this.getFrameData.bind(this); 
 		this.revPuller             = this.revPuller.bind(this); 
 		this.getNumberOfFrames     = this.getNumberOfFrames.bind(this); 
-		this.loopSounds       = this.loopSounds.bind(this); 
+		this.loopSounds            = this.loopSounds.bind(this); 
 		this.playSound             = this.playSound.bind(this); 
+		this.updateDimensions      = this.updateDimensions.bind(this); 
 	}
+
+  // To handle browser resize; 
+  updateDimensions() {
+  	// Lets set the dims of our view in this function: 
+    this.setState({width: window.innerWidth});
+  }; 
+
+  componentDidMount() {
+    window.addEventListener("resize", this.updateDimensions);
+  }
+
 
 	// A change in props will prompt an update in this Component, as defined via componentShouldUpdate. 
 	// What we do here is essentiall update the update. Basically, we the iniial update just resets the props, 
@@ -101,7 +114,6 @@ export default class MapDiv extends Component{
 		// Do we need to clear existing data: 
 		if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
 			//
-			console.log('clearing')
 			var D = new Date(); 
 			await this.setState({
 				frames:[],
@@ -117,7 +129,6 @@ export default class MapDiv extends Component{
 				fetching:false, 
 				cleared:true,
 			});  
-			console.log(this.state.layout);
 		}
 
 		// Is there no existing data? If so, we pull revs for selected page according to its pageid: 
@@ -143,7 +154,6 @@ export default class MapDiv extends Component{
 
 		// This tells us to being pulling the data: 
 		if(nextProps && nextProps.pageid != this.props.pageid){
-			console.log('new page!')
 			return true; 
 		}
 
@@ -161,8 +171,13 @@ export default class MapDiv extends Component{
 		else if(nextState && this.state.frames.length && this.state.frames.length != nextState.frames.length){
 			return true; 
 		}
+
 		else if(nextState && nextState.fetching != this.state.fetching){
 			return true;
+		}
+
+		else if(nextState && nextState.width != this.state.width){
+			return true; 
 		}
 
 		// If all else fails, we don't update the thing: 

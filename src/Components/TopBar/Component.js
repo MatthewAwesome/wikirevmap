@@ -11,6 +11,7 @@ export default class TopBar extends Component {
 			searchFocus:this.props.searchSelected, 
 			randFocus:false, 
 			randSelected:false, 
+			width:window.innerWidth, 
 		}; 
 		this.mouseOnSearch = this.mouseOnSearch.bind(this); 
 		this.mouseOffSearch =  this.mouseOffSearch.bind(this); 
@@ -18,7 +19,18 @@ export default class TopBar extends Component {
 		this.mouseOffRand = this.mouseOffRand.bind(this);  
 		this.searchClickListener = this.searchClickListener.bind(this);
 		this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this); 
+		this.updateDimensions = this.updateDimensions.bind(this); 
 	}
+
+	updateDimensions() {
+  	// Lets set the dims of our view in this function: 
+    this.setState({width: window.innerWidth});
+  }; 
+
+
+  componentDidMount() {
+    window.addEventListener("resize", this.updateDimensions);
+  }
 
 	shouldComponentUpdate(nextProps,nextState){
 		if(nextProps == null){
@@ -27,8 +39,11 @@ export default class TopBar extends Component {
 		else if(nextProps.searchSelected != this.props.searchSelected){
 			return true
 		}
+		else if(nextState && nextState.width != this.state.width){
+			return true; 
+		}
 		else{
-			return true
+			return false 
 		}
 	}
 	// Some class methods to make things pop: 
