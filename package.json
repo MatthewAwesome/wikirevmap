@@ -36,6 +36,7 @@
     "random-color": "^1.0.1",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
+    "react-loading": "^2.0.3",
     "react-plotly.js": "^2.2.0",
     "react-svg": "^5.0.19"
   }

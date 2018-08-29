@@ -5,7 +5,6 @@ export default async function CheckAndAppend(newRevs,existingRevs){
 		var checkIndex = existingRevs.findIndex( r => r.user == x.user); 
 		// A unique user: 
 		if(checkIndex != -1){
-			console.log('duplicate')
 			// make the time string into a time number: 
 			existingRevs[checkIndex].timesArray = existingRevs[checkIndex].timesArray.concat(x.timesArray); 
 		}

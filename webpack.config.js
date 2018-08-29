@@ -17,6 +17,10 @@ module.exports = {
 					loader: "babel-loader"
 				}
 			}, 
+      {
+        test: /\.mp3$/,
+        loader: 'file-loader'
+      },
 			{
          test: /.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
          use: [{
@@ -25,21 +29,6 @@ module.exports = {
            		includePaths:['./icons']
            }
          }]
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          {
-            loader: 'file-loader',
-          },
-          'css-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              includePaths: ['./node_modules','./node_modules/font-awesome/sass']
-            }
-          }
-        ]
       },
 			{
 				test: /\.css$/, 
@@ -59,8 +48,11 @@ module.exports = {
 					}
 				]
 			}
-
 		]
 	}, 
-	plugins: [htmlPlugin]
+	plugins: [htmlPlugin], 
+	output: {
+		path: __dirname + "/docs",
+		filename: "main.js"
+	}
 };

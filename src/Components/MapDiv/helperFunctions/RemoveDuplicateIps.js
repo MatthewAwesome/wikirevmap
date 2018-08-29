@@ -26,7 +26,6 @@ export default function RemoveDuplicateIps(arr){
         	var tStampIndex = u[index].timesArray.indexOf(b.timestamp); 
         	if(tStampIndex == -1){
             var time_ms = new Date(b.timestamp)
-            console.log('duplicate!')
         		u[index].timesArray.push(time_ms.getTime());
         	}
         }

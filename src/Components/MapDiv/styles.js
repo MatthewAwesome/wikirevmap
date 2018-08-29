@@ -1,4 +1,5 @@
 // Styles for the MapDiv: 
+import {alphaGray2,alphaGray5} from '../../Extras/grays'; 
 
 const mapDivStyle = {
 	width: window.innerWidth,
@@ -10,4 +11,23 @@ const mapDivStyle = {
 	zIndex:-1,
 }
 
-export {mapDivStyle}
+const loadingStyle = {
+	height:"100%", 
+	width:"100%", 
+	display:'flex', 
+	flexDirection:'column', 
+	justifyContent:'center', 
+	alignItems:'center', 
+	backgroundColor:alphaGray2,
+	zIndex:99,
+	fontFamily:'courier', 
+	color:'white',
+}; 
+
+const loadingTextStyle = {
+	fontFamily:'courier', 
+	fontSize:20, 
+	fontWeight:400,
+} 
+
+export {mapDivStyle, loadingStyle, loadingTextStyle}

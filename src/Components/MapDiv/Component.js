@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
 import {mapDivStyle} from './styles'; 
 import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
@@ -6,6 +7,7 @@ import GetRevs from './helperFunctions/GetRevs';
 import GetLocation from './helperFunctions/GetLocation'; 
 import RemoveDuplicateIps from './helperFunctions/RemoveDuplicateIps'; 
 import FilterRevs from './helperFunctions/FilterRevs'; 
+
 
 /* Some notes on what we need to do here: 
 
@@ -16,16 +18,17 @@ MOVING ALL THE FETCHING OF DATA INTO THIS FUCKING COMPONENT!
 
 export default class MapDiv extends Component{
 
-	// Perhaps we do the IP ---> Location lookup in here. This makes it easier to look/update
 	constructor(props){
+
+		// super-size, anyone? 
 		super(props); 
 
 		// Some variables for potential use: 
     var D      = new Date(); 
-    var now    = D.getTime(); 
-    var frameWidth = 8.64e9; 
+    // frameWidth=100 days! (a lot of millseconds in 100 days, eh?)
+    var frameWidth = 8.64e9;  
 
-    // Defining a layout: 
+    // Defining a default layout: 
     var mapLayout = {
 	    title: 'Wikipedia Edit Map for <a href="https://en.wikipedia.org/wiki/Neuroscience"> Neuroscience</a>',
 	    geo:{
@@ -49,72 +52,131 @@ export default class MapDiv extends Component{
 	    paper_bgcolor:"#000",
 	    autosize:true,
   	};
-    // The state container: 
+
+    // Initialize the state container: 
     this.state = { data: [{type: 'scattergeo'}], 
 	    layout: mapLayout,
 	    frames: [],
 	    config: {},
 	    rawdata:[],
-	    now:now,
-	    framesBuilt:0,
+	    now:D.getTime(),
 	    frameWidth:frameWidth,
 	    sliderSteps:[],
 	    revPullComplete:false,
 	    bday:null, 
 	    revCount:0, 
+	    maxTimes:1,
 	    fetching:false, 
+	    baseLayout:mapLayout, 
+	    baseData:[{type: 'scattergeo'}],
+	    cleared:true, 
   	};
- 		// Some functions of utility: 
+
+  	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
+  	var abc = 'abcdefghijklmnopqrstuvwxyz'; 
+  	var soundsArray = []; 
+  	for(let j = 0; j < abc.length; j++){
+  		var url = require("../../Assets/Sounds/" + abc[j] + ".mp3");  
+  		soundsArray.push(new Audio(url)); 
+  	}
+  	this.soundsArray = soundsArray; 
+
+ 		// Some function, the utility of which will soon become apparent: 
 		this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this); 
-		// this.componentDidUpdate    = this.componentDidUpdate.bind(this); 
+		this.componentDidUpdate    = this.componentDidUpdate.bind(this); 
 		this.Unpack                = this.Unpack.bind(this); 
 		this.framifyData           = this.framifyData.bind(this); 
 		this.getFrameData          = this.getFrameData.bind(this); 
 		this.revPuller             = this.revPuller.bind(this); 
 		this.getNumberOfFrames     = this.getNumberOfFrames.bind(this); 
+		this.loopSounds       = this.loopSounds.bind(this); 
+		this.playSound             = this.playSound.bind(this); 
 	}
 
 	// A change in props will prompt an update in this Component, as defined via componentShouldUpdate. 
 	// What we do here is essentiall update the update. Basically, we the iniial update just resets the props, 
 	// Now we utilize the new props and actually UPDATE the data and display accordingly. 
 	async componentDidUpdate(prevProps,prevState){
-		// Here We want to update our state! 
-		if(prevProps.pageid != this.props.pageid){
-			// We've received a pageid. Lets pull some data! 
+
+		// Do we need to clear existing data: 
+		if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
+			//
+			console.log('clearing')
+			var D = new Date(); 
+			await this.setState({
+				frames:[],
+				data:this.state.baseData,
+				layout:this.state.baseLayout,
+				config:{},
+				sliderSteps:[],
+				now:D.getTime(),
+				revPullComplete:false,
+				bday:null,
+				revCount:0,
+				maxTimes:1,
+				fetching:false, 
+				cleared:true,
+			});  
+			console.log(this.state.layout);
+		}
+
+		// Is there no existing data? If so, we pull revs for selected page according to its pageid: 
+		else if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
+			console.log('about to pull')
 			await this.revPuller();
 		}
-		// Framify the stuff: 
+
+
+		else if(prevState.cleared == false && this.state.cleared == true){
+			await this.revPuller(); 
+		}
+
+		// Have we pulled all revs for our page of interest? If so, we place the data into frames: 
 		else if(prevState.revPullComplete == false && this.state.revPullComplete == true){
 			await this.framifyData(); 
 		}
+
 	}
 
 	// Update when re receive new data: 
 	shouldComponentUpdate(nextProps,nextState){
+
 		// This tells us to being pulling the data: 
 		if(nextProps && nextProps.pageid != this.props.pageid){
+			console.log('new page!')
 			return true; 
 		}
+
+		// Perhaps we have to clear things! 
+		else if(this.state.cleared != nextState.cleared){
+			return true; 
+		}
+
 		// This tell us to framfiy the data: 
 		else if(nextState && nextState.revPullComplete == true){
-			console.log(nextState); 
 			return true; 
 		}
+
 		// Tells us we have new frames and are ready to display accordingly: 
-		else if(nextState && this.state.frames.length != nextState.frames.length){
+		else if(nextState && this.state.frames.length && this.state.frames.length != nextState.frames.length){
 			return true; 
 		}
+		else if(nextState && nextState.fetching != this.state.fetching){
+			return true;
+		}
+
 		// If all else fails, we don't update the thing: 
 		else{
 			return false; 
 		}
+
 	}
 
 	async revPuller(){
 		try{
+			await this.setState({fetching:true}); 
 			// Pulling revs! 
 			var revCount = 0; 
-			await this.setState({fetching:true}); 
 			// The first call happens outside of the below WHILE loop. 
 			var revData = await GetRevs(this.props.pageid); 
 			var bday    = new Date(revData.revs[0].timestamp); 
@@ -170,9 +232,12 @@ export default class MapDiv extends Component{
 			console.log('Error in search result handler: ', error); 
 		}
 	}
+
 	// onDataUpdate()
 	getNumberOfFrames(){
-		// How many frames can you make with the data available? We don't settle for incomplete frames until the end!  
+
+		// The last timestamp in each timesArray should be the most recent. Put all the 
+		// 'most recent' timestamps into an array and get the max:  
 		var tArray = this.state.revArray.map(
 			(x) => {
 				return x.timesArray[x.timesArray.length-1];
@@ -193,20 +258,29 @@ export default class MapDiv extends Component{
 
 	// Function to place data into frames as dictated by the incoming data: 
 	async framifyData(){
-		// Get the current array of frames that we will add frames to: 
 		try{
+
+			// Arrays and such: 
 			var frames      =  []; 
 			var sliderSteps =  []; 
 			var layout      = this.state.layout; 
-			// Lets see how many frames we need to add: 
 			var framesToAdd = this.getNumberOfFrames(); 
-			console.log(this.state.revArray.length)
+
+			var times = this.state.revArray.map( (x) => {
+				return x.timesArray.length; 
+			})
+
+			var maxTimes = Math.max(...times); 
+			await this.setState({maxTimes:maxTimes}); 
+
+			// Filling the arrays frame by frame: 
 			for(let i = 0; i < framesToAdd; i++){
+
 				// Define start/end time for the current frame: 
 				var frameStartTime = i * this.state.frameWidth + this.state.bday;  
 				var frameEndTime   = (i + 1) * this.state.frameWidth + this.state.bday; 
 
-				// Filter the data accordingly: 
+				// Filter the according to start/end times, and subsequently slice the timesArrays: 
 				var filteredData = this.state.revArray.filter( (x) => {
 					var tIndex = x.timesArray.findIndex( t => t < frameEndTime); 
 					if(tIndex != -1){
@@ -215,36 +289,39 @@ export default class MapDiv extends Component{
 					else{
 						return false; 
 					}
-				}); 
-				// Filter the time arrays accordingly, to: 
-				filteredData = filteredData.map(
+				}).map(
 					(x) => {
-						var last_t_index = x.timesArray.findIndex( t => t < frameEndTime);
-						x.timesArray = x.timesArray.slice(0,last_t_index+1);
+						var last_t_index = x.timesArray.findIndex( t => t > frameEndTime);
+						if(last_t_index != -1){
+							x.timesArray = x.timesArray.slice(0,last_t_index);
+						}
 						return x 
 					}
 				); 
-				console.log(this.state.revArray.length)
-				console.log(filteredData);
+
 				// Assemble data container: 
-				var frameData = this.getFrameData(filteredData); 
+				var frameData  = this.getFrameData(filteredData); 
 				var frameIdStr = i.toString(); 
-				var frame = {data:frameData,name:frameIdStr}
+				var frame      = {data:frameData,name:frameIdStr}
+
 				// Add frame: 
 				frames.push(frame); 
+
 				// Make a slider step for this frame: 
 				var sliderObj = {
 					method:'animate',
 					label:frameIdStr,
 					args:[ 
 						[frameIdStr], 
-						{mode:'immediate',transition:{duration:300},frame:{duration:300,redraw:true}}
+						{mode:'immediate',transition:{duration:600},frame:{duration:600,redraw:false}}
 					]
 				}; 
 				sliderSteps.push(sliderObj); 
-			}
+			} // FRAME ASSEMBLY COMPLETE //
 
-			// Instantiate things: 
+			// Endowing layout object with frame info: 
+
+			// UPDATEMENUS: This gives out plot component play/pause buttons: 
 			var updatemenus = [{
 	      x: 0,
 	      y: 0,
@@ -253,14 +330,14 @@ export default class MapDiv extends Component{
 	      showactive: true,
 	      direction: 'left',
 	      type: 'buttons',
-	      pad: {t: 87, r: 10},
+	      pad: {t: 0, r: 10},
 	      buttons: [{
 	        method: 'animate',
 	        args: [null, {
 	          mode: 'immediate',
 	          fromcurrent: true,
-	          transition: {duration: 300},
-	          frame: {duration: 500, redraw: true}
+	          transition: {duration: 0},
+	          frame: {duration: 300, redraw: false}
 	        }],
 	        label: 'Play'
 	      }, {
@@ -268,14 +345,15 @@ export default class MapDiv extends Component{
 	        args: [[null], {
 	          mode: 'immediate',
 	          transition: {duration: 0},
-	          frame: {duration: 0, redraw: true,}
+	          frame: {duration: 300, redraw: false}
 	        }],
 	        label: 'Pause'
 	      }]
 	    }]; 
 
+	    // SLIDERS gives our plot component a slider bar: 
 	    var sliders = [{
-	      pad: {l: 130, t: 55},
+	      pad: {l: 130, t: 0},
 	      currentvalue: {
 	        visible: true,
 	        prefix: 'Step:',
@@ -285,9 +363,13 @@ export default class MapDiv extends Component{
 	      steps: sliderSteps, 
 	      active:0,
 	    }]
+
+	    // Append the layout object accordingly: 
 	    layout.updatemenus = updatemenus; 
 	    layout.sliders = sliders; 
-			await this.setState({layout:layout,frames:frames,sliderSteps:sliderSteps}); 
+
+	    // Finally, set the state and that's a wrap for this function: 
+			await this.setState({layout:layout,frames:frames,sliderSteps:sliderSteps,cleared:false,fetching:false}); 
 		}
 		catch(error){
 			console.log('ERROR: ', error)
@@ -295,21 +377,22 @@ export default class MapDiv extends Component{
 	}
 
 	getFrameData(data){
+
+		// Retrieve certain info from {data}: 
     var lats       = this.Unpack(data,'latitude') ;
     var lons       = this.Unpack(data,'longitude'); 
     var tstamps    = this.Unpack(data,'timesArray'); 
-    // Arrays and such: 
-    var markerSizes = []; 
-    var textArray = []; 
-    var markerColors = []; 
+
+    // Arrays to house of plot info:  
+    var markerSizes     = []; 
+    var textArray       = []; 
+    var markerColors    = []; 
     var markerOpacities = [];
-    var scale = 32; 
-    // We are scaling my occurrences! 
-    var tLens = tstamps.map( x => x.length); 
-    var maxLength = Math.max(...tLens); 
-    // Fill the arrays with IP data. 
+    var scale           = 50; 
+
+    // Fill said arrays with plot ino:  
     for( let i = 0 ; i < data.length; i++) {
-      var markerSize = Math.log(tstamps[i].length/maxLength+1) * scale; 
+      var markerSize = Math.log(tstamps[i].length/this.state.maxTimes+1) * scale; 
       var markerText = ""; 
       if(data[i].city && data[i].city.length != 0){
           markerText = markerText + data[i].city + ", "; 
@@ -324,9 +407,10 @@ export default class MapDiv extends Component{
       textArray.push(markerText); 
       markerSizes.push(markerSize); 
       markerColors.push('coral');
-      markerOpacities.push(data[i].timesArray.length / maxLength);  
+      markerOpacities.push(data[i].timesArray.length / this.state.maxTimes);  
     }
-  // Now we package the arrays into a dataObject: 
+
+  // Now we package the arrays into a data container: 
   	var dataContainer = [{
       type: 'scattergeo',
       lat: lats,
@@ -340,14 +424,38 @@ export default class MapDiv extends Component{
           width: 2
         },
         color: markerColors,
-        // opacity: markerOpacities,
       }
     }];
+
     return dataContainer
+
 	}
 
-	Unpack(rows, key) {
-	    return rows.map(function(row) { return row[key]; });
+	Unpack(rows,key) {
+	  return rows.map(function(row) { return row[key]; });
+	}
+
+	// A function to loop sounds; the number of iterations determined by the number of revs in each frame. 
+	loopSounds(frameData){
+		var frame = parseInt(frameData.name); 
+		var numEdits = this.state.frames[frame].data[0].lat.length; 
+		if(frame > 0){
+			numEdits = numEdits - this.state.frames[frame-1].data[0].lat.length; 
+		}
+		var numSounds = Math.ceil(numEdits / this.state.maxTimes) * 10; 
+		for(let j = 0; j < numSounds; j++){
+			this.playSound(); 
+		}
+	}
+
+	// A function to play sounds, as called by loopSounds(). 
+	playSound(){
+		var i = Math.floor(Math.random() * Math.floor(26));
+		if(this.soundsArray[i].currentTime > 0.6){
+			this.soundsArray[i].pause(); 
+			this.soundsArray[i].currentTime = 0; 
+		}
+		this.soundsArray[i].play();
 	}
 
 	// Define a render function for our class: 
@@ -355,245 +463,45 @@ export default class MapDiv extends Component{
 		var layout = this.state.layout; 
 		var frames = this.state.frames; 
 		var data = this.state.data; 
-		return(
-			<div style = {mapDivStyle}>
-	      <Plot
-	        data={this.state.data}
-	        layout={this.state.layout}
-	        frames={this.state.frames}
-	        style = {{width:window.innerWidth, height:window.innerHeight-50,}}
-	        useResizeHandler ={true}
-          onInitialized={(figure) => this.setState(figure)}
-          onRelayout = {
-          	(stuff) => {
-          		console.log('on relayout')
-          	}
-          }
-	      />
-			</div>
-		)
-
-	}///
+		if(this.state.fetching == true){
+			console.log('fetching render')
+			return(
+				<div style = {mapDivStyle}>
+					<LoadingComponent/>
+				</div>
+			)
+		}
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frames){
+			return(
+				<div style = {mapDivStyle}>
+		      <Plot
+		        data={this.state.data}
+		        layout={this.state.layout}
+		        frames={this.state.frames}
+		        style = {{width:window.innerWidth, height:window.innerHeight-50,}}
+		        useResizeHandler ={true}
+	          onInitialized={(figure) => this.setState(figure)}
+	          onRelayout = {
+	          	(stuff) => {
+	          		console.log('on relayout')
+	          	}
+	          }
+	          onAnimatingFrame = {(x) => {this.loopSounds(x)}}
+		      >
+		      </Plot>
+		    </div>
+			)
+		}
+		else{
+			return(
+				<div style = {mapDivStyle}>
+					<LoadingComponent/>
+				</div>
+			)
+		}
+	}////
 }
 
 
-	// Need a function to transform raw data into map data: 
-	// async mapifyData(){
-	// 	if(this.props.readyToPlot == true){
-	// 	  // This function will operate upon props.data. 
-	//     // The raw data: 
-	//     var maxTimes = this.props.maxTimes; 
-	//     console.log(maxTimes)
-	//     var lats       = this.Unpack(this.props.data,'latitude') ;
-	//     var lons       = this.Unpack(this.props.data,'longitude'); 
-	//     var tstamps    = this.Unpack(this.props.data,'timesArray'); 
-	//     // Arrays and such: 
-	//     var markerSizes = []; 
-	//     var textArray = []; 
-	//     var markerColors = []; 
-	//     var markerOpacities = [];
-	//     var scale = 32; 
 
-	//     // Fill the arrays with IP data. 
-	//     for ( let i = 0 ; i < this.props.data.length; i++) {
-	//       var markerSize = Math.log(tstamps[i].length/maxTimes+1) * scale; 
-	//       var markerText = ""; 
-	//       if(this.props.data[i].city && this.props.data[i].city.length != 0){
-	//           markerText = markerText + this.props.data[i].city + ", "; 
-	//       }
-	//       if(this.props.data[i].region_name && this.props.data[i].region_name.length != 0){
-	//         markerText = markerText + this.props.data[i].region_name + ", "; 
-	//       }
-	//       if(this.props.data[i].country_name && this.props.data[i].country_name.length != 0){
-	//         markerText = markerText + this.props.data[i].country_name + "\n"; 
-	//       }
-	//       markerText = markerText + "Number of Edits: " + this.props.data[i].timesArray.length.toString();
-	//       textArray.push(markerText); 
-	//       markerSizes.push(markerSize); 
-	//       markerColors.push('coral');
-	//       markerOpacities.push(this.props.data[i].timesArray.length / maxTimes);  
-	//     }
-
-	//     // Populate a data array. 
-
-	//     var emptyData = [{
-	//       type: 'scattergeo',
-	//       lat: [],
-	//       lon: [],
-	//       hoverinfo: 'text',
-	//       text: [],
-	//       marker: {
-	//         size: [],
-	//         line: {
-	//           color: 'coral',
-	//           width: 2
-	//         },
-	//         color: [],
-	//       }
-	//     }];
-
-
-
-	//     var dataContainer = [{
-	//       type: 'scattergeo',
-	//       lat: lats,
-	//       lon: lons,
-	//       hoverinfo: 'text',
-	//       text: textArray,
-	//       marker: {
-	//         size: markerSizes,
-	//         line: {
-	//           color: 'coral',
-	//           width: 2
-	//         },
-	//         color: markerColors,
-	//         // opacity: markerOpacities,
-	//       }
-	//     }];
-
-	//     // Add a new slider step: 
-
-	// 		// Add a new frame: 
-	// 		var frames = this.state.frames; 
-	// 		var startFrame = {
-	// 			name:'beginning', 
-	// 			data:emptyData,
-	// 		};
-	// 		var endFrame = {
-	// 			name:'end', 
-	// 			data:dataContainer
-	// 		}; 
-	// 		frames.push(startFrame); 
-	// 		frames.push(endFrame); 
-	// 		console.log(frames)
-
-	// 	var beginObj = {
-	// 		method:'animate',
-	// 		label:'Beginning',
-	// 		args:[ 
-	// 			['beginning'], 
-	// 			{mode:'immediate',transition:{duration:300},frame:{duration:300,redraw:true}}
-	// 		]
-	// 	}; 
-	// 	var endObj = {
-	// 		method:'animate',
-	// 		label:'End',
-	// 		args:[ 
-	// 			['end'], 
-	// 			{mode:'immediate',transition:{duration:300},frame:{duration:300,redraw:true}}
-	// 		]
-	// 	}; 
-	// 	var sliderSteps = [beginObj,endObj]; 
-	// 		// for layout: 
-	// 		var mapLayout = {
-	//     title: 'Wikipedia Edit Map for <a href="https://en.wikipedia.org/wiki/Neuroscience"> Neuroscience</a>',
-	//     geo:{
-	//       showcoastlines: true,
-	//       projection:{
-	//         type: "miller", 
-	//       }, 
-	//       scope:'world',
-	//       showland:true,
-	//       showocean:true,
-	//       oceancolor: 'rgb(0, 0, 0)',
-	//       landcolor: 'rgb(0, 0, 0)',
-	//       coastlinecolor: '#777777',
-	//       coastlinewidth:1,
-	//       bgcolor:'black',
-	//       margin:{l:0,r:0,t:0,b:0},
-	//       lonaxis:{range:[-180,180]}
-	//     },
-	//     margin:{l:0,r:0,t:0,b:0},
-	//     plot_bgcolor:"black",
-	//     paper_bgcolor:"#000",
-	//     autosize:true,
-	//     updatemenus: [{
-	//       x: 0,
-	//       y: 0,
-	//       yanchor: 'top',
-	//       xanchor: 'left',
-	//       showactive: true,
-	//       direction: 'left',
-	//       type: 'buttons',
-	//       pad: {t: 87, r: 10},
-	//       buttons: [{
-	//         method: 'animate',
-	//         args: [null, {
-	//           mode: 'immediate',
-	//           fromcurrent: true,
-	//           transition: {duration: 300},
-	//           frame: {duration: 500, redraw: true}
-	//         }],
-	//         label: 'Play'
-	//       }, {
-	//         method: 'animate',
-	//         args: [[null], {
-	//           mode: 'immediate',
-	//           transition: {duration: 0},
-	//           frame: {duration: 0, redraw: true,}
-	//         }],
-	//         label: 'Pause'
-	//       }]
-	//     }],
-	//     sliders: [{
-	//       pad: {l: 130, t: 55},
-	//       currentvalue: {
-	//         visible: true,
-	//         prefix: 'Year:',
-	//         xanchor: 'right',
-	//         font: {size: 20, color: '#666'}
-	//       },
-	//       steps: sliderSteps, 
-	//       active:0,
-	//     }],
- //  	};
-	// 		console.log('settingState');
-	//     // setState: 
-	//     await this.setState({frames:frames,layout:mapLayout,}); 
- //  	}
- //  	else{
- //  		// make empty frames: 
- //  		// var dataContainer = [{type:'scattergeo'}]; 
- //  		// this.setState({mapData:dataContainer}); 
- //  	}
-	// }
-
-   //  updatemenus: [{
-	  //     x: 0,
-	  //     y: 0,
-	  //     yanchor: 'top',
-	  //     xanchor: 'left',
-	  //     showactive: false,
-	  //     direction: 'left',
-	  //     type: 'buttons',
-	  //     pad: {t: 87, r: 10},
-	  //     buttons: [{
-	  //       method: 'animate',
-	  //       args: [null, {
-	  //         mode: 'immediate',
-	  //         fromcurrent: true,
-	  //         transition: {duration: 300},
-	  //         frame: {duration: 500, redraw: true}
-	  //       }],
-	  //       label: 'Play'
-	  //     }, {
-	  //       method: 'animate',
-	  //       args: [[null], {
-	  //         mode: 'immediate',
-	  //         transition: {duration: 0},
-	  //         frame: {duration: 0, redraw: true}
-	  //       }],
-	  //       label: 'Pause'
-	  //     }]
-	  //   }],
-			// sliders: [{
-	  //     pad: {l: 130, t: 55},
-	  //     currentvalue: {
-	  //       visible: true,
-	  //       prefix: 'Year:',
-	  //       xanchor: 'right',
-	  //       font: {size: 20, color: '#666'}
-	  //     },
-	  //     steps: sliderSteps
-	  //   }],
 

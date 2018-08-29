@@ -4,7 +4,6 @@
 
 // IMPORTING STUFF: 
 import React, { Component } from 'react';
-// import FontAwesomeIcon from "@fontawesome/react-fontawesome";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"; 
 import FlagIcon from '../Extras/flag.js'; 
 
@@ -13,12 +12,7 @@ import TopBar from '../Components/TopBar/Component';
 import SearchBar from '../Components/SearchBar/Component';
 import MapDiv from '../Components/MapDiv/Component'; 
 
-// Import some functions and vars: 
-import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
-import GetRevs from './helperFunctions/GetRevs'; 
-import GetLocation from './helperFunctions/GetLocation'; 
-import RemoveDuplicateIps from './helperFunctions/RemoveDuplicateIps'; 
-import FilterRevs from './helperFunctions/FilterRevs'; 
+// Import the style for AppMain: 
 import {mainStyle} from './styles'; 
 
 export default class AppMain extends Component{
@@ -29,14 +23,7 @@ export default class AppMain extends Component{
 			searchSelected:false, 
 			randFocus:false, 
 			randSelected:false, 
-			title:null, 
 			viewSearchBar:false,
-			revData:[], 
-			revCount:0,
-			revArray:[],
-			revPullComplete:false,
-			maxTimes:1,
-			bday:0,
 			pageid:null, 
 		}; 
 		this.handleSearchClick = this.handleSearchClick.bind(this); 
@@ -61,8 +48,7 @@ export default class AppMain extends Component{
 		await this.setState({pageid:pageid}); 
 	}
 
-
-	// Building some children right here! 
+	// Assembling the App into a single component:  
 	render(){ 
 		return (
 			<div style = {mainStyle}>

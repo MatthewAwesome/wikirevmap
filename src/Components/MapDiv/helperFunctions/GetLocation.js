@@ -9,7 +9,7 @@ export default async function GetLocation(userip,server){
   // query the heroku server! 
   // console.log(userip);
   userip = userip.replace(/x/g,'0'); 
-  var baseURL = "http://agile-garden-37716.herokuapp.com/json/"; 
+  var baseURL = "https://agile-garden-37716.herokuapp.com/json/"; 
   var reqURL = baseURL + encodeURIComponent(userip); 
   try{
     let ipData = await fetch(reqURL); 
