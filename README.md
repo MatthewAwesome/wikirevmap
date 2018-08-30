@@ -1,4 +1,4 @@
-# wikirevmap
+# WikiRevMap
 Wikipedia edits for any article, mapped over space (and time
 
 Click Here to view the demo! 
@@ -11,7 +11,7 @@ When revisisions (revs) are submitted by unregistered contributors, the IP addre
 
 ## Let's Collaborate! 
 
-To optimize education, we need to better understand how knowledge evolves. This app is (hopefully) a step in that direction. However, this is a journey! In addition to steps, we'll need paradigm-shifting leaps, which rarely happen in a vacuum! We're in the together! Thus, should you happen to thing YourIdea + MyIdea == UnboundedAwesomeoness, we should get in touch! 
+To optimize education, we need to better understand how knowledge evolves. This app is (hopefully) a step in that direction. However, this is a journey! In addition to steps, we'll need paradigm-shifting leaps, which rarely happen in a vacuum! We're in the together! Thus, should you happen to think YourIdea + MyIdea == UnboundedAwesomeoness, we should get in touch! 
 
 Drop me a line and/or fork the repo! 
 
