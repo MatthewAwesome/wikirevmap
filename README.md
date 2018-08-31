@@ -1,7 +1,7 @@
 # WikiRevMap
 Wikipedia edits for any article, mapped over space (and time
 
-Click Here to view the demo! 
+[Click Here to view the demo!](https://matthewawesome.github.io/wikirevmap/)
 
 ## Project Overview
 
