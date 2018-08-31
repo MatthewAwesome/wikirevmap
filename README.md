@@ -1,15 +1,23 @@
 # WikiRevMap
-Wikipedia edits for any article, mapped over space (and time
+Wikipedia edits for any article, mapped over space (and time)
 
 [Click Here to view the demo!](https://matthewawesome.github.io/wikirevmap/)
 
 ## Project Overview
 
+### How does Knowledge Evolve? 
+
 The goal of WikiRevMap is to provide an interactive context to explore the evolution of Wikipedia articles over space and time.
 
-When revisisions (revs) are submitted by unregistered contributors, the IP addresses used to submit such revisions are catalogued. Accordingly, since each IP address is associated with a specific location, it is feasible to dynamically map Wikipedia revisions submitted by unregistered contributors. 
+When revisions(revs) are submitted by unregistered contributors, the IP addresses used to submit such revisions are catalogued. Accordingly, since each IP address is associated with a specific location, it is feasible to dynamically map Wikipedia revisions submitted by unregistered contributors. 
 
-At present the WikiRevMap allows users to generate multi-frame revision maps for all articles belonging to the English language  edition of Wikikpedia. Moreover, in the present version of WikiRevMap, uses must interact with articles one-by-one. However, there are instances in which it may be advantageous simultaneous explore multiple article. 
+By doing so, we can visually examine when and where certain articles are being edited. 
+
+### Limitations and Future Directions
+
+At present the WikiRevMap allows users to generate multi-frame revision maps for all articles belonging to the English language edition of Wikikpedia.
+
+Moreover, in the present version of WikiRevMap, users must interact with articles one-by-one. However, there are instances in which it may be advantageous simultaneous explore multiple article. 
 
 To that end, this is just the beginning, and change is always a brewin'!
 

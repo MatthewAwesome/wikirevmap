@@ -9,9 +9,27 @@ export default class LoadingComponent extends Component{
 
 	constructor(props){
 		super(props); 
-		this.state = {}
-		console.log('loading component')
-	}
+		this.state = {width:window.innerWidth}
+		this.updateDimensions = this.updateDimensions.bind(this); 
+	}; 
+
+  updateDimensions() {
+  	// Lets set the dims of our view in this function: 
+    this.setState({width: window.innerWidth});
+  }; 
+
+  componentDidMount() {
+    window.addEventListener("resize", this.updateDimensions);
+  }; 
+
+	shouldComponentUpdate(nextProps,nextState){
+		if(nextState && nextState.width != this.state.width){
+			return true; 
+		}
+		else{
+			return false; 
+		}
+	}; 
 
 	render(){
 		return(
@@ -20,5 +38,5 @@ export default class LoadingComponent extends Component{
 					Fetching the goods...
 			</div>
 		)
-	}
+	}; 
 }

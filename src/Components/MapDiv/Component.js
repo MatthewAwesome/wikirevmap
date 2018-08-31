@@ -57,7 +57,7 @@ export default class MapDiv extends Component{
     this.state = { data: [{type: 'scattergeo'}], 
 	    layout: mapLayout,
 	    frames: [],
-	    config: {},
+	    config: {displayModeBar: false},
 	    rawdata:[],
 	    now:D.getTime(),
 	    frameWidth:frameWidth,
@@ -119,7 +119,6 @@ export default class MapDiv extends Component{
 				frames:[],
 				data:this.state.baseData,
 				layout:this.state.baseLayout,
-				config:{},
 				sliderSteps:[],
 				now:D.getTime(),
 				revPullComplete:false,
@@ -368,7 +367,7 @@ export default class MapDiv extends Component{
 
 	    // SLIDERS gives our plot component a slider bar: 
 	    var sliders = [{
-	      pad: {l: 130, t: 0},
+	      pad: {l: 130, t: 0,b:10},
 	      currentvalue: {
 	        visible: true,
 	        prefix: 'Step:',
@@ -493,7 +492,8 @@ export default class MapDiv extends Component{
 		        data={this.state.data}
 		        layout={this.state.layout}
 		        frames={this.state.frames}
-		        style = {{width:window.innerWidth, height:window.innerHeight-50,}}
+		        config={this.state.config}
+		        style = {{width:window.innerWidth, height:window.innerHeight-80,}}
 		        useResizeHandler ={true}
 	          onInitialized={(figure) => this.setState(figure)}
 	          onRelayout = {

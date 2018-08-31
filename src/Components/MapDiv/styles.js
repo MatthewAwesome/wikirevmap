@@ -3,7 +3,7 @@ import {alphaGray2,alphaGray5} from '../../Extras/grays';
 
 const mapDivStyle = {
 	width: window.innerWidth,
-	height: window.innerHeight-50,
+	height: window.innerHeight-80,
 	position:'absolute',
 	top:60,
 	left:0,
@@ -19,7 +19,6 @@ const loadingStyle = {
 	justifyContent:'center', 
 	alignItems:'center', 
 	backgroundColor:alphaGray2,
-	zIndex:99,
 	fontFamily:'courier', 
 	color:'white',
 }; 
