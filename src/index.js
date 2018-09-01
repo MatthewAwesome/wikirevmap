@@ -6,10 +6,13 @@
 // IMPORTING STUFF: 
 import React, { Component } from 'react';
 import ReactDOM from "react-dom"; 
-import AppMain from './Main/AppMain'
+import AppMain from './Main/AppMain'; 
+import SliderTest from './SliderTest'; 
 // import FontAwesomeIcon from "@fontawesome/react-fontawesome";
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faEnvelope, faKey, faSearch, faDice, faArrowRight,faAngleDoubleUp } from '@fortawesome/free-solid-svg-icons';
+
+
 library.add(faEnvelope, faKey, faSearch, faDice, faArrowRight, faAngleDoubleUp);
 
 
@@ -18,11 +21,11 @@ library.add(faEnvelope, faKey, faSearch, faDice, faArrowRight, faAngleDoubleUp);
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 const Index = () => {
-		return (
-			<div>
-				<AppMain/>
-			</div>
-		); 
+	return (
+		<div>
+			<AppMain/>
+		</div>
+	); 
 	///
 }; 
 

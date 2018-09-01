@@ -22,6 +22,10 @@ export default class LoadingComponent extends Component{
     window.addEventListener("resize", this.updateDimensions);
   }; 
 
+  componentWillUnmount(){
+  	 window.removeEventListener("resize", this.updateDimensions);
+  }
+
 	shouldComponentUpdate(nextProps,nextState){
 		if(nextState && nextState.width != this.state.width){
 			return true; 

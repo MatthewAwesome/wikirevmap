@@ -8,7 +8,11 @@ import GetLocation from './helperFunctions/GetLocation';
 import RemoveDuplicateIps from './helperFunctions/RemoveDuplicateIps'; 
 import FilterRevs from './helperFunctions/FilterRevs'; 
 
+// import createPlotlyComponent from 'react-plotly.js/factory';
+// const PlotComp = createPlotlyComponent(Plotly);
 
+// console.log(Plotly); 
+// console.log(PlotComp)
 /* Some notes on what we need to do here: 
 
 We need to make an animation slider. 
@@ -345,24 +349,32 @@ export default class MapDiv extends Component{
 	      direction: 'left',
 	      type: 'buttons',
 	      pad: {t: 0, r: 10},
-	      buttons: [{
-	        method: 'animate',
-	        args: [null, {
-	          mode: 'immediate',
-	          fromcurrent: true,
-	          transition: {duration: 0},
-	          frame: {duration: 300, redraw: false}
-	        }],
-	        label: 'Play'
-	      }, {
-	        method: 'animate',
-	        args: [[null], {
-	          mode: 'immediate',
-	          transition: {duration: 0},
-	          frame: {duration: 300, redraw: false}
-	        }],
-	        label: 'Pause'
-	      }]
+	      active:-1,
+	      buttons: [
+		      {
+		        method: 'animate',
+		        args: [null, {
+		          mode: 'immediate',
+		          fromcurrent: true,
+		          transition: {duration: 0},
+		          frame: {duration: 300, redraw: false}
+		        }],
+		        label: 'Play', 
+		        padding:{r:5,l:5}
+		      },
+		      {
+		        method: 'animate',
+		        args: [[null], {
+		          mode: 'immediate',
+		          transition: {duration: 0},
+		          frame: {duration: 300, redraw: false}
+		        }],
+		        label: 'Pause'
+		      }
+		    ], 
+		    font: {family:'courier',size:18}, 
+		    activebgcolor:"#333333", 
+		    borderwidth:2,
 	    }]; 
 
 	    // SLIDERS gives our plot component a slider bar: 
@@ -375,7 +387,6 @@ export default class MapDiv extends Component{
 	        font: {size: 20, color: '#666'}
 	      },
 	      steps: sliderSteps, 
-	      active:0,
 	    }]
 
 	    // Append the layout object accordingly: 
@@ -383,7 +394,7 @@ export default class MapDiv extends Component{
 	    layout.sliders = sliders; 
 
 	    // Finally, set the state and that's a wrap for this function: 
-			await this.setState({layout:layout,frames:frames,sliderSteps:sliderSteps,cleared:false,fetching:false}); 
+			await this.setState({layout:layout,frames:frames,sliderSteps:sliderSteps,cleared:false,fetching:false,data:[{type:'scattergeo'}]}); 
 		}
 		catch(error){
 			console.log('ERROR: ', error)
@@ -474,6 +485,16 @@ export default class MapDiv extends Component{
 
 	// Define a render function for our class: 
 	render(){
+		if(this.plot){
+			// console.log(this.plot)
+			// var animOpts = {
+   //      mode: 'immediate',
+   //      fromcurrent: true,
+   //      transition: {duration: 0},
+   //      frame: {duration: 300, redraw: false}
+		 //  }
+			// plotly.animate(this.plot,null,animOpts); 
+		}
 		var layout = this.state.layout; 
 		var frames = this.state.frames; 
 		var data = this.state.data; 
@@ -489,19 +510,21 @@ export default class MapDiv extends Component{
 			return(
 				<div style = {mapDivStyle}>
 		      <Plot
+		        ref={(el) => { this.plot = el; }}
 		        data={this.state.data}
 		        layout={this.state.layout}
 		        frames={this.state.frames}
 		        config={this.state.config}
 		        style = {{width:window.innerWidth, height:window.innerHeight-80,}}
 		        useResizeHandler ={true}
-	          onInitialized={(figure) => this.setState(figure)}
+	          onInitialized={(figure) => this.setState(figure) }
 	          onRelayout = {
 	          	(stuff) => {
 	          		console.log('on relayout')
 	          	}
 	          }
 	          onAnimatingFrame = {(x) => {this.loopSounds(x)}}
+	          onHover = { x => console.log("Hovering: ", x)}
 		      >
 		      </Plot>
 		    </div>
