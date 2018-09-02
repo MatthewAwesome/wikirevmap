@@ -11,7 +11,8 @@ const htmlPlugin = new HtmlWebPackPlugin({
 module.exports = {
 	module:{
 		rules:[
-		// Triggers ify-loader for all javascript files in plotly.js modules directory: 
+		// Triggers ify-loader for all javascript files in plotly.js modules directory. 
+		// this is for bundling plotly. 
 			{
 				test: /\.js$/, 
 				use:{
@@ -22,6 +23,7 @@ module.exports = {
 				}
 			}, 		
 			// Triggers babel-loader for all javascript files not in node_modules. 
+			// Bundles all .js files in src. 
 			{
 				test: /\.js$/, 
 				exclude: /node_modules/,
@@ -29,7 +31,7 @@ module.exports = {
 					loader: "babel-loader"
 				}
 			}, 
-			// Bundles mp3 files fia 'file-loader'. 
+			// Bundles mp3 files via 'file-loader'. 
       {
         test: /\.mp3$/,
         loader: 'file-loader'
@@ -39,9 +41,6 @@ module.exports = {
          test: /.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
          use: [{
            loader: 'file-loader',
-           options: {
-           		includePaths:['./icons']
-           }
          }]
       },
       // This is for loading styles: 

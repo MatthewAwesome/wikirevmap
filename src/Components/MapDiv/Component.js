@@ -7,6 +7,11 @@ import GetRevs from './helperFunctions/GetRevs';
 import GetLocation from './helperFunctions/GetLocation'; 
 import RemoveDuplicateIps from './helperFunctions/RemoveDuplicateIps'; 
 import FilterRevs from './helperFunctions/FilterRevs'; 
+import Slider from 'react-rangeslider'; 
+import ReactTimeout from 'react-timeout'; 
+import 'react-rangeslider/lib/index.css'; 
+import ControlBar from './ControlBar'; 
+
 
 // import createPlotlyComponent from 'react-plotly.js/factory';
 // const PlotComp = createPlotlyComponent(Plotly);
@@ -20,7 +25,7 @@ We need to make an animation slider.
 MOVING ALL THE FETCHING OF DATA INTO THIS FUCKING COMPONENT! 
 */
 
-export default class MapDiv extends Component{
+class MapDiv extends Component{
 
 	constructor(props){
 
@@ -28,13 +33,22 @@ export default class MapDiv extends Component{
 		super(props); 
 
 		// Some variables for potential use: 
-    var D      = new Date(); 
+    var D = new Date(); 
     // frameWidth=100 days! (a lot of millseconds in 100 days, eh?)
     var frameWidth = 8.64e9;  
 
     // Defining a default layout: 
     var mapLayout = {
-	    title: 'Wikipedia Edit Map for <a href="https://en.wikipedia.org/wiki/Neuroscience"> Neuroscience</a>',
+	    font:{family:'courier-new',size:18,color:'white'},
+	    annotations:[
+	    	{
+	    		text:"TITLE", 
+	    		font:{family:'courier',size:18,color:'slategray',weight:500}, 
+	    		y:0.99,
+	    		showarrow:false,
+	    		bgcolor:'black',
+	    	}
+	    ],
 	    geo:{
 	      showcoastlines: true,
 	      projection:{
@@ -75,6 +89,9 @@ export default class MapDiv extends Component{
 	    baseData:[{type: 'scattergeo'}],
 	    cleared:true, 
 	    width:window.innerWidth, 
+	    currentFrame:0, 
+	    sliderPosition:0,
+	    muted:false, 
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -96,7 +113,12 @@ export default class MapDiv extends Component{
 		this.getNumberOfFrames     = this.getNumberOfFrames.bind(this); 
 		this.loopSounds            = this.loopSounds.bind(this); 
 		this.playSound             = this.playSound.bind(this); 
-		this.updateDimensions      = this.updateDimensions.bind(this); 
+		this.updateDimensions      = this.updateDimensions.bind(this);  
+		this.onPlay                = this.onPlay.bind(this); 
+		this.animate               = this.animate.bind(this); 
+		this.sliderChangeHandler   = this.sliderChangeHandler.bind(this); 
+		this.onPause               = this.onPause.bind(this); 
+		this.onMute                = this.onMute.bind(this); 
 	}
 
   // To handle browser resize; 
@@ -182,6 +204,9 @@ export default class MapDiv extends Component{
 		else if(nextState && nextState.width != this.state.width){
 			return true; 
 		}
+		else if(nextState && nextState.sliderPosition != this.state.sliderPosition){
+			return true; 
+		}
 
 		// If all else fails, we don't update the thing: 
 		else{
@@ -223,8 +248,7 @@ export default class MapDiv extends Component{
       		}
       	},[]
       ); 
-      revData.revs = keeperArray; 
-      keeperArray = null; 
+      revData.revs = keeperArray;  
 			revCount += revData.revsPulled; 
 			await this.setState({bday:bday,revCount:revCount,revArray:revData.revs}); 
 			// Further processing the rev data to display on map: 
@@ -360,7 +384,8 @@ export default class MapDiv extends Component{
 		          frame: {duration: 300, redraw: false}
 		        }],
 		        label: 'Play', 
-		        padding:{r:5,l:5}
+		        name:'play', 
+		        execute:false
 		      },
 		      {
 		        method: 'animate',
@@ -369,7 +394,9 @@ export default class MapDiv extends Component{
 		          transition: {duration: 0},
 		          frame: {duration: 300, redraw: false}
 		        }],
-		        label: 'Pause'
+		        label: 'Pause', 
+		        name: 'pause', 
+		        execute:false,
 		      }
 		    ], 
 		    font: {family:'courier',size:18}, 
@@ -390,8 +417,6 @@ export default class MapDiv extends Component{
 	    }]
 
 	    // Append the layout object accordingly: 
-	    layout.updatemenus = updatemenus; 
-	    layout.sliders = sliders; 
 
 	    // Finally, set the state and that's a wrap for this function: 
 			await this.setState({layout:layout,frames:frames,sliderSteps:sliderSteps,cleared:false,fetching:false,data:[{type:'scattergeo'}]}); 
@@ -461,8 +486,8 @@ export default class MapDiv extends Component{
 	}
 
 	// A function to loop sounds; the number of iterations determined by the number of revs in each frame. 
-	loopSounds(frameData){
-		var frame = parseInt(frameData.name); 
+	loopSounds(){
+		var frame = this.state.currentFrame;  
 		var numEdits = this.state.frames[frame].data[0].lat.length; 
 		if(frame > 0){
 			numEdits = numEdits - this.state.frames[frame-1].data[0].lat.length; 
@@ -483,6 +508,77 @@ export default class MapDiv extends Component{
 		this.soundsArray[i].play();
 	}
 
+	async animate(){
+		if(this.state.anim != null){
+			console.log('delayed? ', this.state.currentFrame); 
+			this.loopSounds(); 
+			var data = this.state.frames[this.state.currentFrame].data; 
+			if(this.state.currentFrame < this.state.frames.length-1){
+				this.setState({currentFrame:this.state.currentFrame+1,data:data,sliderPosition:this.state.currentFrame+1}); 
+			}
+			else{
+				this.props.clearInterval(this.state.anim); 
+				this.setState({anim:null}); 
+			}
+		}
+		else{
+			this.props.clearInterval(this.state.anim); 
+		}
+	}
+
+	async onPlay(){
+		// Loop through frames. updating this.state.data! 
+		console.log('playing!')
+		var frames = this.state.frames; 
+		if(frames.length > 0 && this.state.anim == null){
+			if(this.state.currentFrame == this.state.frames.length-1){
+				var currentFrame = 0; 
+			}
+			else{
+				var currentFrame = this.state.currentFrame; 
+			}
+			console.log(currentFrame)
+			this.setState({anim:this.props.setInterval(this.animate, 400),currentFrame:currentFrame}); 	
+		}	
+		else if(this.state.anim != null){
+			this.props.clearInterval(this.state.anim);
+			this.setState({anim:null}); 
+		}
+	}
+
+	onPause(){
+		this.props.clearInterval(this.state.anim); 
+		this.setState({anim:null}); 
+	}
+
+	onMute(){
+		var muted = !this.state.muted; 
+		this.setState({muted:muted}); 
+	}
+
+
+	async sliderChangeHandler(val){
+		// handling slider changes... 
+		if(val != this.state.sliderPosition){
+			// The first condition satisifies when the user moves the slider when there are frames, 
+			// and an animation is not in progress: 
+			if(this.state.anim == null && this.state.frames.length > 0){
+				var roundedVal = Math.round(val); 
+				if(roundedVal <= this.state.frames.length-1){
+					var data = this.state.frames[roundedVal].data; 
+					this.setState({data:data,currentFrame:roundedVal,sliderPosition:val}); 
+					this.loopSounds(); 
+				}
+				else{
+					this.setSate({sliderPosition:this.state.currentFrame+0.5})
+				}
+			}
+			// What if the slider 
+			else if(this.state.frames.length == 0){
+				this.setState({sliderPosition:0})
+			}
+		}
+	}
 	// Define a render function for our class: 
 	render(){
 		if(this.plot){
@@ -514,8 +610,8 @@ export default class MapDiv extends Component{
 		        data={this.state.data}
 		        layout={this.state.layout}
 		        frames={this.state.frames}
-		        config={this.state.config}
-		        style = {{width:window.innerWidth, height:window.innerHeight-80,}}
+		        config={{displayModeBar: false}}
+		        style = {{width:window.innerWidth, height:window.innerHeight-150}}
 		        useResizeHandler ={true}
 	          onInitialized={(figure) => this.setState(figure) }
 	          onRelayout = {
@@ -523,10 +619,19 @@ export default class MapDiv extends Component{
 	          		console.log('on relayout')
 	          	}
 	          }
-	          onAnimatingFrame = {(x) => {this.loopSounds(x)}}
+	          onAnimatingFrame = {(x) => {this.loopSounds(x); console.log(x)}}
 	          onHover = { x => console.log("Hovering: ", x)}
+	          onButtonClicked = { (e) => this.buttonHandler(e)}
 		      >
 		      </Plot>
+		      <ControlBar
+		      	onPlay  = {this.onPlay}
+		      	onPause = {this.onPause}
+		      	onMute  = {this.onMute}
+		      	onSliderChange = {this.sliderChangeHandler}
+		      	sliderVal = {this.state.sliderPosition}
+		      	playing = {this.state.anim}
+		      />
 		    </div>
 			)
 		}
@@ -540,6 +645,7 @@ export default class MapDiv extends Component{
 	}////
 }
 
+export default ReactTimeout(MapDiv)
 
 
 

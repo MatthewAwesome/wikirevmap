@@ -22,7 +22,8 @@ export default class SliderTest extends Component {
   }
  
   render() {
-    let { volume } = this.state
+    let volume = this.state.volume
+    console.log(volume)
     return (
       <div style={{width:window.innerWidth/2,paddingLeft:20,paddingTop:200}}>
       <Slider

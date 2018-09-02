@@ -3,12 +3,14 @@ import {alphaGray2,alphaGray5} from '../../Extras/grays';
 
 const mapDivStyle = {
 	width: window.innerWidth,
-	height: window.innerHeight-80,
+	height: window.innerHeight-40,
 	position:'absolute',
+	display:'flex',
+	flexDirection:'column',
 	top:60,
 	left:0,
 	align:'left',
-	zIndex:-1,
+	alignItems:'flex-start'
 }
 
 const loadingStyle = {

@@ -4,6 +4,7 @@
 import {alphaBlack} from '../Extras/grays'; 
 
 const mainStyle = {
+	height:window.innerHeight,
 	display:"flex", 
 	flexDirection:"column", 
 	alignItems:"flex-start",

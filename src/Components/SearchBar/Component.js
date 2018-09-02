@@ -139,6 +139,7 @@ export default class SearchBar extends Component{
 	  			flexDirection:'column', 
 	  			justifyContent:'flex-start', 
 	  			alignItems:'space-between', 
+	  			zIndex:99,
 	  		}}>
 		  		<div style = {searchBarStyle}>
 		  			<form onSubmit={this.handleSubmit} >
