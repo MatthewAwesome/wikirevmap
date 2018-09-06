@@ -11,7 +11,7 @@ export default async function GetRevs(pageid,cont){
   // We either have a continue or we don't: 
   try{
   	var queryUrl = 'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=revisions&pageids=' + pageid + '&rvprop=ids%7Ctimestamp%7Cflags%7Ccomment%7Cuser%7Csize%7Cuserid&rvlimit=50&rvdir=newer'; 
-  	if(cont && cont.rvcontinue){
+  	if(cont && cont != null && cont.rvcontinue){
   		// We have a continue: 
 		  var encodedContinue = encodeURIComponent(cont.rvcontinue); 
       queryUrl = queryUrl + "&rvcontinue=" + encodedContinue; 

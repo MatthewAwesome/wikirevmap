@@ -30,6 +30,7 @@ export default async function SearchWikipedia(searchString,n){
       		return newTitle
       	}
       )
+      // This are image response: 
       var imgResponse = await SearchWikipediaImage(encTitlesArray); 
       imgResponse = imgResponse.filter(
       	(obj) => {
@@ -38,9 +39,9 @@ export default async function SearchWikipedia(searchString,n){
       		}
       	}
       ); 
-      // Now map it! 
+      // Map images response to title. 
       var searchResponse = titlesArray.map(
-      	(title) => {
+      	(title,index) => {
       		// get the index of the current title.. 
       		var goodIndex = imgResponse.findIndex(
       			(obj) => {
@@ -49,7 +50,9 @@ export default async function SearchWikipedia(searchString,n){
       				}
       			}
       		)
-      		return imgResponse[goodIndex]
+          var outObject  = imgResponse[goodIndex]; 
+          outObject.url  = urlArray[index]; 
+      		return outObject
       	}
       )
       // Okay. We will grab the the reviewers who appear with greatest frequency: 

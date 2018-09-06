@@ -3,78 +3,42 @@ import React, { Component } from 'react';
 import Slider from 'react-rangeslider'; 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ReactTimeout from 'react-timeout'; 
+import {
+	controlBarStyle, 
+	sliderBarStyle, 
+	buttonDivStyle, 
+	playButtonStyle, 
+	pauseButtonStyle, 
+	soundButtonStyle, 
+} from './styles';
 
-
-const controlBarStyle = {
-	width:"100%", 
-	height:100, 
-	display:'flex', 
-	flexDirection:'column', 
-	justifyContent: 'flex-start', 
-	alignItems:'center', 
-}; 
-
-const sliderBarStyle = {
-	width:"70%",  
-	height:50,
-	alignItems:'center', 
-	justifyContent:'center', 
-}; 
-
-const buttonDivStyle = {
-	height:50, 
-	width:"70%", 
-	display:'flex', 
-	flexDirection:'row', 
-	justifyContent:'space-around', 
-	alignItems:'center', 
-}; 
-
-const playButtonStyle = {
-	height:"32px",
-	width:"32px",
-	padding:"6px",
-	borderRadius:"32px"
-}; 
-
-const pauseButtonStyle = {
-	height:"32px",
-	width:"32px",
-	padding:"6px",
-	borderRadius:"32px"
-}; 
-
-const soundButtonStyle = {
-	height:"32px",
-	width:"32px",
-	padding:"6px",
-	borderRadius:"32px"
-}; 
-
-class ControlBar extends Component{
+// Place into a container class for use by Parent Component: 
+export default class ControlBar extends Component{
 
 	constructor(props){
+
 		super(props); 
+
 		this.state = {
     	playing:false, 
     	muted:false,
+    	width:window.innerWidth,
 		}; 
+
 		this.onPause = this.onPause.bind(this); 
 		this.onPlay = this.onPlay.bind(this); 
 		this.onMute = this.onMute.bind(this); 
 		this.updateDimensions = this.updateDimensions.bind(this); 
 	}
 
-	// To handle browser resize; 
+	// To handle browser resize: 
   updateDimensions() {
-  	// Lets set the dims of our view in this function: 
-    this.setState({
-    	width: window.innerWidth,  
-    });
+    this.setState({width: window.innerWidth});
   }; 
 
-
   // Lifecycle methods to keep things zippy.
+
+  // Determine if an update is needed: 
   shouldComponentUpdate(nextProps,nextState){
   	if(nextProps && nextProps != this.props){
   		return true
@@ -90,16 +54,21 @@ class ControlBar extends Component{
   	}
   }
 
+  // Listen to resize events, and call this.updateDimensions() when on is detected. 
   componentDidMount() {
     window.addEventListener("resize", this.updateDimensions);
   }
 
+  // Button/slider handlers:
+
+  // For the play button: 
   onPlay(){
   	var playing = !this.state.playing; 
   	this.setState({playing:playing})
   	this.props.onPlay();
   }
 
+  // ... the pause button:
   onPause(){
   	// We are going to make the pause button flash, 300ms. 
   	var playing = !this.state.playing; 
@@ -107,27 +76,34 @@ class ControlBar extends Component{
   	this.props.onPause(); 
   }
 
+  // ... the mute/unmute button!
   onMute(){
   	var muted = !this.state.muted; 
   	this.setState({muted:muted})
   	this.props.onMute(); 
   }
 
+  // Finally, the only necessary function of them all: RENDER!
 	render(){
 
 		// Update styles according to state/props: 
 		playButtonStyle.color  = this.props.playing != null ? 'white' : 'darkgray'; 
 		pauseButtonStyle.color = this.props.playing != null ? 'darkgray' : 'darkgray'; 
 		soundButtonStyle.color = "darkgray";
+
+		// Determining the sound Icon via sound state: 
 		let volIcon = this.state.muted ? "volume-off" : "volume-up"; 
+
+		// Package it all into a div and sent it on its way... 
 		return(
 			<div style = {controlBarStyle}>
 				<div style = {sliderBarStyle}>
 					<Slider 
 						min      = {0}
-						max      = {100}
+						max      = {61}
 						value    = {this.props.sliderVal}
 						onChange = {this.props.onSliderChange}
+						labels   = {this.props.labels}
 					/>
 				</div>
 				<div style = {buttonDivStyle}>
@@ -152,5 +128,4 @@ class ControlBar extends Component{
 	}
 }
 
-export default ControlBar;
 

@@ -32,10 +32,10 @@ export default class SearchResults extends Component {
 					var title = element.title
 				}
 				if(element.image){
-					return(<PageRow imgUrl={element.image} pageTitle = {title} searchResultHandler = {this.props.searchResultHandler} pageid = {element.pageid} index = {index} key ={index.toString()}/> )
+					return(<PageRow imgUrl={element.image} pageTitle = {title} searchResultHandler = {this.props.searchResultHandler} pageid = {element.pageid} index = {index} url ={element.url} key ={index.toString()}/> )
 				}///
 				else{
-					return(<PageRow Color={element.color} pageTitle = {title} searchResultHandler = {this.props.searchResultHandler} pageid = {element.pageid} index = {index} key ={index.toString()}/> )
+					return(<PageRow Color={element.color} pageTitle = {title} searchResultHandler = {this.props.searchResultHandler} pageid = {element.pageid} index = {index} url = {element.url} key ={index.toString()}/> )
 				}
 			}
 		)

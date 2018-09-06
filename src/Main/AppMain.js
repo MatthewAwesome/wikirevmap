@@ -25,6 +25,7 @@ export default class AppMain extends Component{
 			randSelected:false, 
 			viewSearchBar:false,
 			pageid:null, 
+			pageurl:null
 		}; 
 		this.handleSearchClick = this.handleSearchClick.bind(this); 
 		this.searchResultHandler = this.searchResultHandler.bind(this);
@@ -42,10 +43,10 @@ export default class AppMain extends Component{
 	};
 
   // This is the is called when a user clicks on a page of interest: 
-	async searchResultHandler(pageid){
+	async searchResultHandler(pageid,pageurl){
 		// Clear data container: 
 		await this.handleSearchClick(); 
-		await this.setState({pageid:pageid}); 
+		await this.setState({pageid:pageid,pageurl:pageurl}); 
 	}
 
 	// Assembling the App into a single component:  
@@ -59,7 +60,7 @@ export default class AppMain extends Component{
 					searchResultHandler = {this.searchResultHandler}
 					arrowClickHandler = {this.handleSearchClick}
 				/>
-				<MapDiv pageid={this.state.pageid} />
+				<MapDiv pageid={this.state.pageid} pageurl={this.state.pageurl} />
 			</div>
 		); 
 	}

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
 import {mapDivStyle} from './styles'; 
+import {baseLayout} from './MapStuff';
 import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
 import GetRevs from './helperFunctions/GetRevs'; 
 import GetLocation from './helperFunctions/GetLocation'; 
@@ -12,17 +13,15 @@ import ReactTimeout from 'react-timeout';
 import 'react-rangeslider/lib/index.css'; 
 import ControlBar from './ControlBar'; 
 
-
-// import createPlotlyComponent from 'react-plotly.js/factory';
-// const PlotComp = createPlotlyComponent(Plotly);
-
-// console.log(Plotly); 
-// console.log(PlotComp)
 /* Some notes on what we need to do here: 
 
-We need to make an animation slider. 
+* Pulling data needs to be broken up. The wait time at present is unacceptable for most 
+  pages that garner even modest interest. 
 
-MOVING ALL THE FETCHING OF DATA INTO THIS FUCKING COMPONENT! 
+* Need to pull some telling stats. Page Size, # of edits, # Unique contributors, etc, 
+
+* Can we identify vandals? And plot them acccordingly? Could be neat! Where are most vandals located? 
+
 */
 
 class MapDiv extends Component{
@@ -31,67 +30,34 @@ class MapDiv extends Component{
 
 		// super-size, anyone? 
 		super(props); 
-
 		// Some variables for potential use: 
     var D = new Date(); 
-    // frameWidth=100 days! (a lot of millseconds in 100 days, eh?)
-    var frameWidth = 8.64e9;  
-
-    // Defining a default layout: 
-    var mapLayout = {
-	    font:{family:'courier-new',size:18,color:'white'},
-	    annotations:[
-	    	{
-	    		text:"TITLE", 
-	    		font:{family:'courier',size:18,color:'slategray',weight:500}, 
-	    		y:0.99,
-	    		showarrow:false,
-	    		bgcolor:'black',
-	    	}
-	    ],
-	    geo:{
-	      showcoastlines: true,
-	      projection:{
-	        type: "miller", 
-	      }, 
-	      scope:'world',
-	      showland:true,
-	      showocean:true,
-	      oceancolor: 'rgb(0, 0, 0)',
-	      landcolor: 'rgb(0, 0, 0)',
-	      coastlinecolor: '#777777',
-	      coastlinewidth:1,
-	      bgcolor:'black',
-	      margin:{l:0,r:0,t:0,b:0},
-	      lonaxis:{range:[-180,180]}
-	    },
-	    margin:{l:0,r:0,t:0,b:0},
-	    plot_bgcolor:"black",
-	    paper_bgcolor:"#000",
-	    autosize:true,
-  	};
 
     // Initialize the state container: 
     this.state = { data: [{type: 'scattergeo'}], 
-	    layout: mapLayout,
-	    frames: [],
+	    layout: baseLayout,
+	    frameData: [],
 	    config: {displayModeBar: false},
 	    rawdata:[],
 	    now:D.getTime(),
-	    frameWidth:frameWidth,
-	    sliderSteps:[],
 	    revPullComplete:false,
 	    bday:null, 
 	    revCount:0, 
 	    maxTimes:1,
 	    fetching:false, 
-	    baseLayout:mapLayout, 
+	    baseLayout:baseLayout, 
 	    baseData:[{type: 'scattergeo'}],
 	    cleared:true, 
 	    width:window.innerWidth, 
 	    currentFrame:0, 
 	    sliderPosition:0,
 	    muted:false, 
+	    buffering:false, 
+	    revArray:[], 
+	    cont:null, 
+	    articleAge:null, 
+	    endPts:null, 
+	    labels:{}, 
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -104,77 +70,97 @@ class MapDiv extends Component{
   	this.soundsArray = soundsArray; 
 
  		// Some function, the utility of which will soon become apparent: 
-		this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this); 
-		this.componentDidUpdate    = this.componentDidUpdate.bind(this); 
-		this.Unpack                = this.Unpack.bind(this); 
-		this.framifyData           = this.framifyData.bind(this); 
-		this.getFrameData          = this.getFrameData.bind(this); 
-		this.revPuller             = this.revPuller.bind(this); 
-		this.getNumberOfFrames     = this.getNumberOfFrames.bind(this); 
-		this.loopSounds            = this.loopSounds.bind(this); 
-		this.playSound             = this.playSound.bind(this); 
-		this.updateDimensions      = this.updateDimensions.bind(this);  
-		this.onPlay                = this.onPlay.bind(this); 
-		this.animate               = this.animate.bind(this); 
-		this.sliderChangeHandler   = this.sliderChangeHandler.bind(this); 
-		this.onPause               = this.onPause.bind(this); 
-		this.onMute                = this.onMute.bind(this); 
+		this.Unpack              = this.Unpack.bind(this); 
+		this.framifyData         = this.framifyData.bind(this); 
+		this.getFrameData        = this.getFrameData.bind(this); 
+		this.getNumberOfFrames   = this.getNumberOfFrames.bind(this); 
+		this.loopSounds          = this.loopSounds.bind(this); 
+		this.playSound           = this.playSound.bind(this); 
+		this.updateDimensions    = this.updateDimensions.bind(this);  
+		this.onPlay              = this.onPlay.bind(this); 
+		this.animate             = this.animate.bind(this); 
+		this.sliderChangeHandler = this.sliderChangeHandler.bind(this); 
+		this.onPause             = this.onPause.bind(this); 
+		this.onMute              = this.onMute.bind(this); 
+		this.RevPuller           = this.RevPuller.bind(this); 
+		this.GetMoreRevs         = this.GetMoreRevs.bind(this); 
+		this.renderControlBar    = this.renderControlBar.bind(this); 
 	}
 
   // To handle browser resize; 
   updateDimensions() {
-  	// Lets set the dims of our view in this function: 
     this.setState({width: window.innerWidth});
   }; 
 
+  // Attached UpdateDimensions to our window: 
   componentDidMount() {
     window.addEventListener("resize", this.updateDimensions);
   }
 
 
-	// A change in props will prompt an update in this Component, as defined via componentShouldUpdate. 
-	// What we do here is essentiall update the update. Basically, we the iniial update just resets the props, 
-	// Now we utilize the new props and actually UPDATE the data and display accordingly. 
+  // componentDidUpdate is used to fetch and/or clear data for wiki_revs: 
 	async componentDidUpdate(prevProps,prevState){
 
-		// Do we need to clear existing data: 
-		if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
-			//
+		// This ie executed when the user initial comes into the app.  
+		if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
+			console.log('about to pull')
+			// This call pulls the first rev batch: 
+			await this.RevPuller();
+		}
+
+		// Do we need to clear existing data, users has requested a new page: 
+		else if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
 			var D = new Date(); 
 			await this.setState({
-				frames:[],
+				frameData:[],
 				data:this.state.baseData,
 				layout:this.state.baseLayout,
 				sliderSteps:[],
 				now:D.getTime(),
 				revPullComplete:false,
 				bday:null,
+				articleAge:null, 
 				revCount:0,
 				maxTimes:1,
 				fetching:false, 
 				cleared:true,
+				cont:null, 
+				endPts:null, 
+				labels:{}, 
+				currentFrame:0, 
+				sliderPosition:0, 
+				anim:null, 
 			});  
 		}
 
-		// Is there no existing data? If so, we pull revs for selected page according to its pageid: 
-		else if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
-			console.log('about to pull')
-			await this.revPuller();
-		}
-
-
+		// Fetching after the clear: 
 		else if(prevState.cleared == false && this.state.cleared == true){
-			await this.revPuller(); 
+			console.log('pulling after clearing')
+			await this.RevPuller(); 
 		}
 
-		// Have we pulled all revs for our page of interest? If so, we place the data into frames: 
-		else if(prevState.revPullComplete == false && this.state.revPullComplete == true){
-			await this.framifyData(); 
+		// Fetching additional revs... 
+		else if(prevState.cont != this.state.cont && this.state.cont != null){
+			console.log('getting more')
+			await this.RevPuller(); 
+		}
+
+		// Setting state signifying that we have pulled all the revs for a given page: 
+		else if(prevState.cont != null && this.state.cont == null){
+			// And we tack on end label: 
+			var labels   = this.state.labels; 
+			var tEnd     = new Date(this.state.endPts[61]); 
+			labels[61] = tEnd.toGMTString().slice(8,16);
+			// Get a middle pt. too, 
+			var tMid     = new Date(this.state.endPts[31]); 
+			labels[31] = tMid.toGMTString().slice(8,16); 
+			this.setState({revPullComplete:true,labels:labels})
+			console.log('complete\n',this.state.frameData.length)
 		}
 
 	}
 
-	// Update when re receive new data: 
+	// Update when we receive new data: 
 	shouldComponentUpdate(nextProps,nextState){
 
 		// This tells us to being pulling the data: 
@@ -192,8 +178,17 @@ class MapDiv extends Component{
 			return true; 
 		}
 
+		else if(nextState && nextState.revArray != this.state.revArray){
+			return true; 
+		}
+
+
 		// Tells us we have new frames and are ready to display accordingly: 
-		else if(nextState && this.state.frames.length && this.state.frames.length != nextState.frames.length){
+		else if(nextState && this.state.frameData.length && this.state.frameData.length != nextState.frames.length){
+			return true; 
+		}
+
+		else if(nextState && this.state.cont != nextState.cont){
 			return true; 
 		}
 
@@ -204,6 +199,7 @@ class MapDiv extends Component{
 		else if(nextState && nextState.width != this.state.width){
 			return true; 
 		}
+
 		else if(nextState && nextState.sliderPosition != this.state.sliderPosition){
 			return true; 
 		}
@@ -215,59 +211,87 @@ class MapDiv extends Component{
 
 	}
 
-	async revPuller(){
+	async RevPuller(){
 		try{
-			await this.setState({fetching:true}); 
-			// Pulling revs! 
-			var revCount = 0; 
-			// The first call happens outside of the below WHILE loop. 
-			var revData = await GetRevs(this.props.pageid); 
-			var bday    = new Date(revData.revs[0].timestamp); 
-			bday = bday.getTime(); 
-			// Filter Revs: 
-      revData.revs = FilterRevs(revData.revs); 
-      // Handle duplicates and get locations: 
-      var noDups =  RemoveDuplicateIps(revData.revs); 
-      revData.revs = noDups; 
-      noDups = null; 
-      // Now we get the locations and remove revs that don't yield location data: 
-      var keeperArray = []; 
-      revData.revs = await revData.revs.reduce( 
-      	async function (acc,currElement){
-      		if(currElement.user != null){
-      			let locationData = await GetLocation(currElement.user); 
-      			if(locationData != null){
-		      		// Go through the fields of location object and add them to {b}. 
-		      		var keys = Object.keys(locationData);  
-			      	for(let k = 0; k < keys.length; k++){
-				      	currElement[keys[k]] = locationData[keys[k]]; 
-				      }	
-				      keeperArray.push(currElement); 
-				      return acc
-		      	}
-      		}
-      	},[]
-      ); 
-      revData.revs = keeperArray;  
-			revCount += revData.revsPulled; 
-			await this.setState({bday:bday,revCount:revCount,revArray:revData.revs}); 
-			// Further processing the rev data to display on map: 
-			// This is the first rev: 
-			while(revData.cont != null ){
-				// Keep calling the api and updating the data container: 
-				revData      = await GetRevs(this.props.pageid,revData.cont); 
-				revCount    += revData.revsPulled; 
-				revData.revs = FilterRevs(revData.revs); 
-				noDups       = await RemoveDuplicateIps(revData.revs); 
-				revData.revs = noDups; 
-				// Perhaps we've already searched some of these IPs? We don't want to do so again...CheckAndAppend! 
-				var appendedRevs = await CheckAndAppend(revData.revs,this.state.revArray); 
-				await this.setState({revArray:appendedRevs,revCount:revCount});
-				if(revData.cont == null){
-					noDups = null; 
-					this.setState({revPullComplete:true})
-					break
+
+			// Take care of some basic stuff: 
+			var revCount   = this.state.revCount; 
+			var revData    = await GetRevs(this.props.pageid,this.state.cont); 
+			var cont       = revData.cont == null ? null : revData.cont; 
+			var bdayObj    = new Date(revData.revs[0].timestamp); 
+			var bday       = bdayObj.getTime(); 
+			var articleAge = this.state.now - bday; 
+			revCount      += revData.revsPulled; 
+
+			// Update state with article age and/or bday: 
+			if(this.state.bday == null && this.state.articleAge == null){
+				// Take this opportunity to make a vector of date end points: 
+				var endPts = []; 
+				for(let j = 0; j < 62; j++){
+					var endpt = bday + ((j+1) * articleAge / 62); 
+					endPts.push(endpt)
 				}
+				// Begin to make the labeles for slider: 
+				var bdayStr = bdayObj.toGMTString().slice(8,16); 
+				var labels = this.state.labels; 
+				labels[0] = bdayStr; 
+				this.setState({bday:bday,articleAge:articleAge,cleared:false,endPts:endPts,labels:labels,fetching:true}); 
+			}
+			
+			// Right here, we are going to determine how many frames we can make with the pulled revs: 
+			var lastTime = new Date(revData.revs[revData.revs.length-1].timestamp); 
+			lastTime = lastTime.getTime(); 
+			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
+			
+			// Clean up the revs // 
+      revData.revs  = FilterRevs(revData.revs); 
+      revData.revs  =  RemoveDuplicateIps(revData.revs); 
+      revData.revs  = await CheckAndAppend(revData.revs,this.state.revArray);  
+			
+      // Update state accordingly: 
+			if(framesToMake > 0){
+				// Make the frames: 
+				var frames = this.framifyData(revData.revs,framesToMake); 
+				// we update labels again: 
+				var labels = this.state.labels; 
+				if(frames.frameData.length != this.state.endPts.length){
+					var labels = this.state.labels; 
+					// get percent loaded: 
+					var pct = Math.round((frames.frameData.length/62)*100).toString(); 
+					labels[61] = pct + "% loaded..."
+				}
+				// Make a title: 
+				// title string: 
+				console.log(this.props.pageurl)
+				var annotations = [
+			  	{
+			  		text: revData.title, 
+			  		font:{family:'courier',size:18,color:'white',weight:400}, 
+			  		y:0.99,
+			  		showarrow:false,
+			  		bgcolor:'black',
+			  		visible:true,
+			  	}
+  			]; 
+  			var layout = this.state.layout; 
+  			layout.annotations = annotations; 
+				this.setState({
+					revCount:revCount,
+					revArray:revData.revs,
+					frameData:frames.frameData,
+					maxTimes:frames.maxTimes, 
+					fetching:false,
+					cont:cont,
+					labels:labels, 
+					layout:layout, 
+				});			
+			}
+			else{
+				this.setState({
+					revCount:revCount,
+					revArray:revData.revs,
+					cont:cont
+				});		
 			}
 		}
 		catch(error){
@@ -275,56 +299,66 @@ class MapDiv extends Component{
 		}
 	}
 
-	// onDataUpdate()
-	getNumberOfFrames(){
-
-		// The last timestamp in each timesArray should be the most recent. Put all the 
-		// 'most recent' timestamps into an array and get the max:  
-		var tArray = this.state.revArray.map(
-			(x) => {
-				return x.timesArray[x.timesArray.length-1];
+	async GetMoreRevs(){
+		try{
+			// Keep calling the api and updating the data container: 
+			var revCount = this.state.revCount; 
+			var rvArray = this.state.revArray;
+			var revData = await GetRevs(this.props.pageid,this.state.cont); 
+			revCount    += revData.revsPulled; 
+			revData.revs = FilterRevs(revData.revs); 
+			var noDups       = await RemoveDuplicateIps(revData.revs); 
+			revData.revs = noDups; 
+			var appendedRevs = await CheckAndAppend(revData.revs,rvArray);  
+			var frames = this.framifyData(appendedRevs,this.state.frameData,this.state.articleAge,this.state.bday); 
+			var cont = revData.cont == null ? null : revData.cont; 
+			if(frames != null){
+				await this.setState({
+					revCount:revCount,
+					revArray:appendedRevs,
+					frameData:frames.frameData,
+					maxTimes:frames.maxTimes, 
+					cont:cont
+				}); 				
 			}
-		)
-		var maxTime  = Math.max(...tArray); 
-		var startTime = this.state.frames.length*this.state.frameWidth + this.state.bday; 
-		// Make the available frames. 
-		if(this.state.revPullComplete == false){
-			var numFrames = Math.floor((maxTime-startTime)/this.state.frameWidth);
+			else{
+				await this.setState({
+					revCount:revCount,
+					revArray:appendedRevs, 
+					cont:cont,
+				}); 					
+			}
 		}
-		else{
-			var numFrames = Math.ceil((maxTime-startTime)/this.state.frameWidth);
+		catch(error){
+			console.log('Error getting more revs: ', error); 
 		}
-		// Lets make some frames and update the state accordingly: 
-		return numFrames
+	}
+
+
+	getNumberOfFrames(lastTime){
+		// The last timestamp in each timesArray should be the most recent. Put all the 
+		var timePercent = (lastTime - this.state.bday) / this.state.articleAge; 
+		var framesPossible = Math.floor(timePercent * 62); 
+		var numberOfFrames = Math.floor(timePercent * 62) - this.state.frameData.length; 
+		return numberOfFrames
 	}
 
 	// Function to place data into frames as dictated by the incoming data: 
-	async framifyData(){
+	framifyData(revArray,framesToMake){
 		try{
-
-			// Arrays and such: 
-			var frames      =  []; 
-			var sliderSteps =  []; 
-			var layout      = this.state.layout; 
-			var framesToAdd = this.getNumberOfFrames(); 
-
-			var times = this.state.revArray.map( (x) => {
+			// Getthe 'maxTimes'. This might be unnecessary... 
+			var times = revArray.map( (x) => {
 				return x.timesArray.length; 
 			})
-
-			var maxTimes = Math.max(...times); 
-			await this.setState({maxTimes:maxTimes}); 
-
-			// Filling the arrays frame by frame: 
-			for(let i = 0; i < framesToAdd; i++){
-
-				// Define start/end time for the current frame: 
-				var frameStartTime = i * this.state.frameWidth + this.state.bday;  
-				var frameEndTime   = (i + 1) * this.state.frameWidth + this.state.bday; 
-
-				// Filter the according to start/end times, and subsequently slice the timesArrays: 
-				var filteredData = this.state.revArray.filter( (x) => {
-					var tIndex = x.timesArray.findIndex( t => t < frameEndTime); 
+			var maxTimes = Math.max(...times);
+			var newFrames = []; 
+			var oldFrames = this.state.frameData; 
+			// Filter data according to frame! 
+			for(let i = oldFrames.length; i < oldFrames.length + framesToMake; i++){
+				// Get max time. 
+				// Filter revs accordingly: 
+				var filteredData = revArray.filter( (x) => {
+					var tIndex = x.timesArray.findIndex( t => t < this.state.endPts[i]); 
 					if(tIndex != -1){
 						return true
 					}
@@ -333,152 +367,80 @@ class MapDiv extends Component{
 					}
 				}).map(
 					(x) => {
-						var last_t_index = x.timesArray.findIndex( t => t > frameEndTime);
+						var last_t_index = x.timesArray.findIndex( t => t > this.state.endPts[i]);
 						if(last_t_index != -1){
 							x.timesArray = x.timesArray.slice(0,last_t_index);
 						}
 						return x 
 					}
-				); 
-
-				// Assemble data container: 
-				var frameData  = this.getFrameData(filteredData); 
-				var frameIdStr = i.toString(); 
-				var frame      = {data:frameData,name:frameIdStr}
-
-				// Add frame: 
-				frames.push(frame); 
-
-				// Make a slider step for this frame: 
-				var sliderObj = {
-					method:'animate',
-					label:frameIdStr,
-					args:[ 
-						[frameIdStr], 
-						{mode:'immediate',transition:{duration:600},frame:{duration:600,redraw:false}}
-					]
-				}; 
-				sliderSteps.push(sliderObj); 
-			} // FRAME ASSEMBLY COMPLETE //
-
-			// Endowing layout object with frame info: 
-
-			// UPDATEMENUS: This gives out plot component play/pause buttons: 
-			var updatemenus = [{
-	      x: 0,
-	      y: 0,
-	      yanchor: 'top',
-	      xanchor: 'left',
-	      showactive: true,
-	      direction: 'left',
-	      type: 'buttons',
-	      pad: {t: 0, r: 10},
-	      active:-1,
-	      buttons: [
-		      {
-		        method: 'animate',
-		        args: [null, {
-		          mode: 'immediate',
-		          fromcurrent: true,
-		          transition: {duration: 0},
-		          frame: {duration: 300, redraw: false}
-		        }],
-		        label: 'Play', 
-		        name:'play', 
-		        execute:false
-		      },
-		      {
-		        method: 'animate',
-		        args: [[null], {
-		          mode: 'immediate',
-		          transition: {duration: 0},
-		          frame: {duration: 300, redraw: false}
-		        }],
-		        label: 'Pause', 
-		        name: 'pause', 
-		        execute:false,
-		      }
-		    ], 
-		    font: {family:'courier',size:18}, 
-		    activebgcolor:"#333333", 
-		    borderwidth:2,
-	    }]; 
-
-	    // SLIDERS gives our plot component a slider bar: 
-	    var sliders = [{
-	      pad: {l: 130, t: 0,b:10},
-	      currentvalue: {
-	        visible: true,
-	        prefix: 'Step:',
-	        xanchor: 'right',
-	        font: {size: 20, color: '#666'}
-	      },
-	      steps: sliderSteps, 
-	    }]
-
-	    // Append the layout object accordingly: 
-
-	    // Finally, set the state and that's a wrap for this function: 
-			await this.setState({layout:layout,frames:frames,sliderSteps:sliderSteps,cleared:false,fetching:false,data:[{type:'scattergeo'}]}); 
+				);
+				newFrames.push(filteredData); 			 
+			}
+			newFrames = this.getFrameData(newFrames,maxTimes)
+			var nn = oldFrames.concat(newFrames);
+			return{frameData:nn,maxTimes:maxTimes}; 
+			oldFrames = null; 
 		}
 		catch(error){
 			console.log('ERROR: ', error)
+			return null
 		}
 	}
 
-	getFrameData(data){
+	getFrameData(data,maxTimes){
 
-		// Retrieve certain info from {data}: 
-    var lats       = this.Unpack(data,'latitude') ;
-    var lons       = this.Unpack(data,'longitude'); 
-    var tstamps    = this.Unpack(data,'timesArray'); 
-
-    // Arrays to house of plot info:  
-    var markerSizes     = []; 
-    var textArray       = []; 
-    var markerColors    = []; 
-    var markerOpacities = [];
-    var scale           = 50; 
-
-    // Fill said arrays with plot ino:  
-    for( let i = 0 ; i < data.length; i++) {
-      var markerSize = Math.log(tstamps[i].length/this.state.maxTimes+1) * scale; 
-      var markerText = ""; 
-      if(data[i].city && data[i].city.length != 0){
-          markerText = markerText + data[i].city + ", "; 
-      }
-      if(data[i].region_name && data[i].region_name.length != 0){
-        markerText = markerText + data[i].region_name + ", "; 
-      }
-      if(data[i].country_name && data[i].country_name.length != 0){
-        markerText = markerText + data[i].country_name + "\n"; 
-      }
-      markerText = markerText + "Number of Edits: " + data[i].timesArray.length.toString();
-      textArray.push(markerText); 
-      markerSizes.push(markerSize); 
-      markerColors.push('coral');
-      markerOpacities.push(data[i].timesArray.length / this.state.maxTimes);  
-    }
-
-  // Now we package the arrays into a data container: 
-  	var dataContainer = [{
-      type: 'scattergeo',
-      lat: lats,
-      lon: lons,
-      hoverinfo: 'text',
-      text: textArray,
-      marker: {
-        size: markerSizes,
-        line: {
-          color: 'coral',
-          width: 2
-        },
-        color: markerColors,
-      }
-    }];
-
-    return dataContainer
-
+		// data is an Array of frames. Update accordingly: 
+		var mappedData = data.map(
+			(x) => {
+				// Get the data from x, an array of objects: 
+				var lats       = this.Unpack(x,'latitude') ;
+		    var lons       = this.Unpack(x,'longitude'); 
+		    var tstamps    = this.Unpack(x,'timesArray'); 
+	      // Arrays to house of plot info:  
+		    var markerSizes     = []; 
+		    var textArray       = []; 
+		    var markerColors    = []; 
+		    var markerOpacities = [];
+		    var scale           = 30; 
+		    x.forEach(
+		    	(y,index) => {
+				    var markerSize = Math.log(y.timesArray.length * Math.E) * 3;  
+			      var markerText = ""; 
+			      if(y.city && y.city.length != 0){
+			          markerText = markerText + y.city + ", "; 
+			      }
+			      if(y.region_name && y.region_name.length != 0){
+			        markerText = markerText + y.region_name + ", "; 
+			      }
+			      if(y.country_name && y.country_name.length != 0){
+			        markerText = markerText + y.country_name + "\n"; 
+			      }
+			      markerText = markerText + "Number of Edits: " + y.timesArray.length.toString();
+			      textArray.push(markerText); 
+			      markerSizes.push(markerSize); 
+			      markerColors.push('coral');
+			      markerOpacities.push(y.timesArray.length / maxTimes); 	    		
+		    	}
+		    )
+		    var dataContainer = [{
+		      type: 'scattergeo',
+		      lat: lats,
+		      lon: lons,
+		      hoverinfo: 'text',
+		      text: textArray,
+		      marker: {
+		        size: markerSizes,
+		        line: {
+		          color: 'coral',
+		          width: 2
+		        },
+		        color: markerColors,
+		      }
+		    }]
+		    return dataContainer
+			}
+		)
+    return mappedData
 	}
 
 	Unpack(rows,key) {
@@ -488,9 +450,9 @@ class MapDiv extends Component{
 	// A function to loop sounds; the number of iterations determined by the number of revs in each frame. 
 	loopSounds(){
 		var frame = this.state.currentFrame;  
-		var numEdits = this.state.frames[frame].data[0].lat.length; 
+		var numEdits = this.state.frameData[frame][0].lat.length; 
 		if(frame > 0){
-			numEdits = numEdits - this.state.frames[frame-1].data[0].lat.length; 
+			numEdits = numEdits - this.state.frameData[frame-1][0].lat.length; 
 		}
 		var numSounds = Math.ceil(numEdits / this.state.maxTimes) * 10; 
 		for(let j = 0; j < numSounds; j++){
@@ -505,20 +467,21 @@ class MapDiv extends Component{
 			this.soundsArray[i].pause(); 
 			this.soundsArray[i].currentTime = 0; 
 		}
+		this.soundsArray[i].volume = this.state.muted ? 0 : 1; 
 		this.soundsArray[i].play();
 	}
 
 	async animate(){
 		if(this.state.anim != null){
-			console.log('delayed? ', this.state.currentFrame); 
 			this.loopSounds(); 
-			var data = this.state.frames[this.state.currentFrame].data; 
-			if(this.state.currentFrame < this.state.frames.length-1){
+			var data = this.state.frameData[this.state.currentFrame]; 
+			// Do we have another frame available?
+			if(this.state.currentFrame < this.state.frameData.length-1){
 				this.setState({currentFrame:this.state.currentFrame+1,data:data,sliderPosition:this.state.currentFrame+1}); 
 			}
-			else{
+			else if(this.state.revPullComplete == true){
 				this.props.clearInterval(this.state.anim); 
-				this.setState({anim:null}); 
+				this.setState({anim:null});
 			}
 		}
 		else{
@@ -528,17 +491,15 @@ class MapDiv extends Component{
 
 	async onPlay(){
 		// Loop through frames. updating this.state.data! 
-		console.log('playing!')
-		var frames = this.state.frames; 
+		var frames = this.state.frameData; 
 		if(frames.length > 0 && this.state.anim == null){
-			if(this.state.currentFrame == this.state.frames.length-1){
+			if(this.state.currentFrame == this.state.frameData.length-1){
 				var currentFrame = 0; 
 			}
 			else{
 				var currentFrame = this.state.currentFrame; 
 			}
-			console.log(currentFrame)
-			this.setState({anim:this.props.setInterval(this.animate, 400),currentFrame:currentFrame}); 	
+			this.setState({anim:this.props.setInterval(this.animate, 300),currentFrame:currentFrame}); 	
 		}	
 		else if(this.state.anim != null){
 			this.props.clearInterval(this.state.anim);
@@ -562,37 +523,50 @@ class MapDiv extends Component{
 		if(val != this.state.sliderPosition){
 			// The first condition satisifies when the user moves the slider when there are frames, 
 			// and an animation is not in progress: 
-			if(this.state.anim == null && this.state.frames.length > 0){
+			if(this.state.anim == null && this.state.frameData.length > 0){
 				var roundedVal = Math.round(val); 
-				if(roundedVal <= this.state.frames.length-1){
-					var data = this.state.frames[roundedVal].data; 
+				if(roundedVal <= this.state.frameData.length-1){
+					var data = this.state.frameData[roundedVal]; 
 					this.setState({data:data,currentFrame:roundedVal,sliderPosition:val}); 
 					this.loopSounds(); 
 				}
 				else{
-					this.setSate({sliderPosition:this.state.currentFrame+0.5})
+					this.setState({sliderPosition:this.state.currentFrame+0.5})
 				}
 			}
 			// What if the slider 
-			else if(this.state.frames.length == 0){
+			else if(this.state.frameData.length == 0){
 				this.setState({sliderPosition:0})
 			}
 		}
 	}
+
+	renderControlBar(){
+		if(this.state.frameData.length > 0){
+			// need to update the labels: 
+			return(
+	      <ControlBar
+	      	onPlay         = {this.onPlay}
+	      	onPause        = {this.onPause}
+	      	onMute         = {this.onMute}
+	      	onSliderChange = {this.sliderChangeHandler}
+	      	sliderVal      = {this.state.sliderPosition}
+	      	playing        = {this.state.anim}
+	      	style          = {{width:window.innerWidth,height:100}}
+	      	labels         = {this.state.labels}
+	      />
+			)
+		}
+		else{
+			return(null); 
+		}
+	}
+
 	// Define a render function for our class: 
 	render(){
-		if(this.plot){
-			// console.log(this.plot)
-			// var animOpts = {
-   //      mode: 'immediate',
-   //      fromcurrent: true,
-   //      transition: {duration: 0},
-   //      frame: {duration: 300, redraw: false}
-		 //  }
-			// plotly.animate(this.plot,null,animOpts); 
-		}
+
 		var layout = this.state.layout; 
-		var frames = this.state.frames; 
+		var frames = this.state.frameData; 
 		var data = this.state.data; 
 		if(this.state.fetching == true){
 			console.log('fetching render')
@@ -602,36 +576,20 @@ class MapDiv extends Component{
 				</div>
 			)
 		}
-		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frames){
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData){
 			return(
 				<div style = {mapDivStyle}>
 		      <Plot
-		        ref={(el) => { this.plot = el; }}
 		        data={this.state.data}
-		        layout={this.state.layout}
-		        frames={this.state.frames}
-		        config={{displayModeBar: false}}
-		        style = {{width:window.innerWidth, height:window.innerHeight-150}}
-		        useResizeHandler ={true}
-	          onInitialized={(figure) => this.setState(figure) }
-	          onRelayout = {
-	          	(stuff) => {
-	          		console.log('on relayout')
-	          	}
-	          }
-	          onAnimatingFrame = {(x) => {this.loopSounds(x); console.log(x)}}
-	          onHover = { x => console.log("Hovering: ", x)}
-	          onButtonClicked = { (e) => this.buttonHandler(e)}
+		        layout           = {this.state.layout}
+		        config           = {{displayModeBar: false}}
+		        style            = {{width:window.innerWidth, height:window.innerHeight-150}}
+		        useResizeHandler = {true}
+	          onInitialized    = {(figure) => this.setState(figure)}
+	          onRelayout       = {(figure) => {this.setState(figure)}}
 		      >
 		      </Plot>
-		      <ControlBar
-		      	onPlay  = {this.onPlay}
-		      	onPause = {this.onPause}
-		      	onMute  = {this.onMute}
-		      	onSliderChange = {this.sliderChangeHandler}
-		      	sliderVal = {this.state.sliderPosition}
-		      	playing = {this.state.anim}
-		      />
+		      {this.renderControlBar()}
 		    </div>
 			)
 		}

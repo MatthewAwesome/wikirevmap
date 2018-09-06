@@ -65,6 +65,17 @@ const minSearchResultStyle = {
 	borderTopStyle:'solid',
 }; 
 
+const pageRowStyle = {
+	flexDirection:'row', 
+	display:'flex',
+	height:"50px", 
+	justifyContent:'space-between', 
+	alignItems:'center',
+	width: "100%", 
+	backgroundColor:alphaGray2,  
+	paddingLeft:0,
+}; 
+
 const letterStyle = thumbStyle; 
 letterStyle.paddingLeft = 10; 
 
@@ -75,5 +86,6 @@ export {
 	thumbStyle, 
 	rowTitleStyle, 
 	minSearchResultStyle, 
-	letterStyle
+	letterStyle, 
+	pageRowStyle,
 }

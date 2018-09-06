@@ -1,23 +1,21 @@
 import React, { Component } from 'react';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"; 
-import {thumbStyle,letterStyle,rowTitleStyle} from './styles'; 
+import {thumbStyle,letterStyle,rowTitleStyle,pageRowStyle} from './styles'; 
 import {alphaGray2,alphaGray3,alphaGray5} from '../../Extras/grays';
 
 
 export default class PageRow extends Component{
 
 	constructor(props){
+
 		super(props); 
-		if(props.index % 2 == 0){
-			var bgcolor = alphaGray3; 
-		}
-		else{
-			var bgcolor = alphaGray2;
-		}
-		this.state = {bgcolor:bgcolor,defaultbg:bgcolor}; 
-		this.searchResultHandler = props.searchResultHandler.bind(this,props.pageid); 
-		this.prepRow = this.prepRow.bind(this); 
-		this.clickHandler = this.clickHandler.bind(this); 
+
+		var bgcolor = props.index % 2 == 0 ? alphaGray3 : alphaGray2; 
+
+		this.state               = {bgcolor:bgcolor,defaultbg:bgcolor}; 
+		this.searchResultHandler = props.searchResultHandler.bind(this,props.pageid,props.url); 
+		this.prepRow             = this.prepRow.bind(this); 
+		this.clickHandler        = this.clickHandler.bind(this); 
 	}
 
 	prepRow(){
@@ -32,16 +30,6 @@ export default class PageRow extends Component{
 			var thumbComponent = <div style = {letterStyle}>{this.props.pageTitle.slice(0,1)}</div>; 
 		}
 		return thumbComponent
-	}/// 
-
-	rowColor(){
-		if((this.props.index) % 2 == 0){
-			var bgcolor = alphaGray3; 
-		}
-		else{
-			var bgcolor = alphaGray2;
-		}
-		return bgcolor
 	}
 
 	clickHandler(event){
@@ -54,9 +42,8 @@ export default class PageRow extends Component{
 	}
 
 	/// Now Render///
-
 	render(){
-		var rowColor = this.rowColor(); 
+		pageRowStyle.backgroundColor = this.state.bgcolor; 
 		return(
 			<div 
 				style = {{
@@ -69,9 +56,9 @@ export default class PageRow extends Component{
 	  				backgroundColor:this.state.bgcolor,  
 	  				paddingLeft:0,
 	  		}}
-				onClick={() => this.props.searchResultHandler(this.props.pageid)}
-				onMouseDown = {(event) => this.clickHandler(event)}
-				onMouseUp = {(event) => this.clickHandler(event)}
+				onClick     = { ()      => this.props.searchResultHandler(this.props.pageid,this.props.url) }
+				onMouseDown = { (event) => this.clickHandler(event) }
+				onMouseUp   = { (event) => this.clickHandler(event) }
 			>
 				{this.prepRow()}
 				<div style = {rowTitleStyle}>

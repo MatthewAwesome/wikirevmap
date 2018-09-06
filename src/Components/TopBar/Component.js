@@ -36,12 +36,13 @@ export default class TopBar extends Component {
 		if(nextProps == null){
 			return true
 		}
+	  else if(nextState && nextState.width != this.state.width){
+			return true; 
+		}
 		else if(nextProps.searchSelected != this.props.searchSelected){
 			return true
 		}
-		else if(nextState && nextState.width != this.state.width){
-			return true; 
-		}
+
 		else{
 			return false 
 		}

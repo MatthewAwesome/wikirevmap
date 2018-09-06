@@ -1,5 +1,4 @@
 // Styles for TopBar Component: 
-
 const topRowStyle = {
 	display:'flex', 
 	flexDirection:'row',
