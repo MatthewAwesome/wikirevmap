@@ -103,7 +103,6 @@ class MapDiv extends Component{
 
 		// This ie executed when the user initial comes into the app.  
 		if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
-			console.log('about to pull')
 			// This call pulls the first rev batch: 
 			await this.RevPuller();
 		}
@@ -135,13 +134,11 @@ class MapDiv extends Component{
 
 		// Fetching after the clear: 
 		else if(prevState.cleared == false && this.state.cleared == true){
-			console.log('pulling after clearing')
 			await this.RevPuller(); 
 		}
 
 		// Fetching additional revs... 
 		else if(prevState.cont != this.state.cont && this.state.cont != null){
-			console.log('getting more')
 			await this.RevPuller(); 
 		}
 
@@ -262,7 +259,6 @@ class MapDiv extends Component{
 				}
 				// Make a title: 
 				// title string: 
-				console.log(this.props.pageurl)
 				var annotations = [
 			  	{
 			  		text: revData.title, 
@@ -405,20 +401,21 @@ class MapDiv extends Component{
 		    x.forEach(
 		    	(y,index) => {
 				    var markerSize = Math.log(y.timesArray.length * Math.E) * 3;  
-			      var markerText = ""; 
+				    var editStr = y.timesArray.length == 1 ? ' Edit from ' : ' Edits from '; 
+			      var markerText = '<b>' + y.timesArray.length.toString() + editStr; 
 			      if(y.city && y.city.length != 0){
-			          markerText = markerText + y.city + ", "; 
+			          markerText = markerText + y.city + ","; 
 			      }
 			      if(y.region_name && y.region_name.length != 0){
-			        markerText = markerText + y.region_name + ", "; 
+			        markerText = markerText + y.region_name + ","; 
 			      }
 			      if(y.country_name && y.country_name.length != 0){
-			        markerText = markerText + y.country_name + "\n"; 
+			        markerText = markerText + y.country_name + '.'; 
 			      }
-			      markerText = markerText + "Number of Edits: " + y.timesArray.length.toString();
+			      markerText = markerText + '</b>'; 
 			      textArray.push(markerText); 
 			      markerSizes.push(markerSize); 
-			      markerColors.push('coral');
+			      markerColors.push('white');
 			      markerOpacities.push(y.timesArray.length / maxTimes); 	    		
 		    	}
 		    )
@@ -427,15 +424,17 @@ class MapDiv extends Component{
 		      lat: lats,
 		      lon: lons,
 		      hoverinfo: 'text',
+		      hoverlabel:{font:{family:'Courier New',size:14}},
 		      text: textArray,
 		      marker: {
 		        size: markerSizes,
 		        line: {
-		          color: 'coral',
+		          color: 'white',
 		          width: 2
 		        },
 		        color: markerColors,
-		      }
+		      }, 
+		      dates:tstamps, 
 		    }]
 		    return dataContainer
 			}
@@ -450,6 +449,8 @@ class MapDiv extends Component{
 	// A function to loop sounds; the number of iterations determined by the number of revs in each frame. 
 	loopSounds(){
 		var frame = this.state.currentFrame;  
+		console.log(this.state.currentFrame);
+		console.log(this.state.frameData[frame]); 
 		var numEdits = this.state.frameData[frame][0].lat.length; 
 		if(frame > 0){
 			numEdits = numEdits - this.state.frameData[frame-1][0].lat.length; 
@@ -473,10 +474,12 @@ class MapDiv extends Component{
 
 	async animate(){
 		if(this.state.anim != null){
-			this.loopSounds(); 
-			var data = this.state.frameData[this.state.currentFrame]; 
+			console.log('in anim')
 			// Do we have another frame available?
-			if(this.state.currentFrame < this.state.frameData.length-1){
+			if(this.state.currentFrame < this.state.frameData.length){
+				this.loopSounds(); 
+				var data = this.state.frameData[this.state.currentFrame]; 
+				console.log(this.state.currentFrame); console.log(this.state.frameData);  
 				this.setState({currentFrame:this.state.currentFrame+1,data:data,sliderPosition:this.state.currentFrame+1}); 
 			}
 			else if(this.state.revPullComplete == true){
@@ -520,19 +523,19 @@ class MapDiv extends Component{
 
 	async sliderChangeHandler(val){
 		// handling slider changes... 
+		this.onPause(); 
 		if(val != this.state.sliderPosition){
 			// The first condition satisifies when the user moves the slider when there are frames, 
 			// and an animation is not in progress: 
-			if(this.state.anim == null && this.state.frameData.length > 0){
+			if(this.state.frameData.length > 0){
 				var roundedVal = Math.round(val); 
-				if(roundedVal <= this.state.frameData.length-1){
-					var data = this.state.frameData[roundedVal]; 
-					this.setState({data:data,currentFrame:roundedVal,sliderPosition:val}); 
-					this.loopSounds(); 
+				if(roundedVal >= this.state.frameData.length){
+					roundedVal = this.state.frameData.length-1; 
 				}
-				else{
-					this.setState({sliderPosition:this.state.currentFrame+0.5})
-				}
+				console.log(roundedVal); 
+				var data = this.state.frameData[roundedVal]; 
+				await this.setState({data:data,currentFrame:roundedVal,sliderPosition:roundedVal,anim:null}); 
+				this.loopSounds(); 
 			}
 			// What if the slider 
 			else if(this.state.frameData.length == 0){
@@ -569,7 +572,6 @@ class MapDiv extends Component{
 		var frames = this.state.frameData; 
 		var data = this.state.data; 
 		if(this.state.fetching == true){
-			console.log('fetching render')
 			return(
 				<div style = {mapDivStyle}>
 					<LoadingComponent/>

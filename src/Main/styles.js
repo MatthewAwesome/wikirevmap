@@ -12,7 +12,8 @@ const mainStyle = {
 	backgroundColor:alphaBlack,
 	padding:0,
 	fontFamily:'courier-new',
-	paddingLeft:0
+	paddingLeft:0, 
+	paddingBotton:10,
 }; 
 
 export {  

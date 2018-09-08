@@ -38,7 +38,7 @@ var controlBarStyle = {
 	flexDirection:'column', 
 	justifyContent: 'flex-start', 
 	alignItems:'center', 
-	paddingBottom:15,
+	paddingBottom:0,
 }; 
 
 const sliderBarStyle = {

@@ -100,7 +100,7 @@ export default class ControlBar extends Component{
 				<div style = {sliderBarStyle}>
 					<Slider 
 						min      = {0}
-						max      = {61}
+						max      = {60}
 						value    = {this.props.sliderVal}
 						onChange = {this.props.onSliderChange}
 						labels   = {this.props.labels}

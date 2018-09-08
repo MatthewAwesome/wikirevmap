@@ -1,7 +1,7 @@
     // Defining a default layout:
 
 const baseLayout = {
-  font:{family:'courier-new',size:18,color:'white'},
+  font:{family:'Courier New',size:18,color:'white'},
   geo:{
     showcoastlines: true,
     projection:{
@@ -11,9 +11,9 @@ const baseLayout = {
     showland:true,
     showocean:true,
     oceancolor: 'rgb(0, 0, 0)',
-    landcolor: 'rgb(0, 0, 0)',
+    landcolor: '#111111',
     coastlinecolor: '#777777',
-    coastlinewidth:1,
+    coastlinewidth:1, 
     bgcolor:'black',
     margin:{l:0,r:0,t:0,b:0},
     lonaxis:{range:[-180,180]}
@@ -22,6 +22,11 @@ const baseLayout = {
   plot_bgcolor:"black",
   paper_bgcolor:"#000",
   autosize:true,
+  hoverlabel:{
+    font:{family:['Courier New',], color:'black'}, 
+    bgcolor:'white', 
+    bordercolor:'white', 
+  },
 };
 
 export{baseLayout}; 

@@ -2,7 +2,7 @@
 const topRowStyle = {
 	display:'flex', 
 	flexDirection:'row',
-	justifyContent:'space-between', 
+	justifyContent:'center', 
 	alignItems:'center', 
 	width:"100%", 
 	paddingBottom:5, 

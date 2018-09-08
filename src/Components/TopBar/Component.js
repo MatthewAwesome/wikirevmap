@@ -77,41 +77,28 @@ export default class TopBar extends Component {
 	render(){
 		return(
 			<div style = {topRowStyle}>
-			  <FontAwesomeIcon
-					icon="search"
-					onClick ={this.searchClickListener}
-					onMouseEnter = {this.mouseOnSearch}
-					onMouseLeave	= {this.mouseOffSearch}
-					style = { {
-  						color: this.state.searchFocus ? "darkgray": "black", 
-							height:"32px",
-							width:"32px",
-							backgroundColor: this.state.searchFocus  ? "lightgray" : "#555555", 
-							backgroundColor: this.props.searchSelected  ? "lightgray" : "#555555", 
-							padding:"6px",
-							borderRadius:"32px"
-					}
-				}
-				/>
 	  		<div style = {titleStyle}>
 					WIKI_REV_MAP
 				</div>
-				<FontAwesomeIcon
-					icon="dice"
-					onClick ={this.props.handleRandClick}
-					onMouseEnter = {this.mouseOnRand}
-					onMouseLeave	= {this.mouseOffRand}
-					style = { {
-  						color: this.state.randFocus ? "darkgray": "black", 
-							height:"32px",
-							width:"32px",
-							backgroundColor: this.state.randFocus ? "lightgray" : "#555555", 
-							padding:"6px",
-							borderRadius:"32px"
-						}
-					}
-				/>
 			</div>
 		)
 	}
-}////
+}
+////
+
+				// <FontAwesomeIcon
+				// 	icon="search"
+				// 	onClick ={this.searchClickListener}
+				// 	onMouseEnter = {this.mouseOnSearch}
+				// 	onMouseLeave	= {this.mouseOffSearch}
+				// 	style = { {
+  		// 				color: this.state.searchFocus ? "darkgray": "black", 
+				// 			height:"32px",
+				// 			width:"32px",
+				// 			backgroundColor: this.state.searchFocus  ? "lightgray" : "#555555", 
+				// 			backgroundColor: this.props.searchSelected  ? "lightgray" : "#555555", 
+				// 			padding:"6px",
+				// 			borderRadius:"32px"
+				// 	}
+				// }
+				// />
