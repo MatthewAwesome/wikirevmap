@@ -1,16 +1,25 @@
 // Styles for the MapDiv: 
 import {alphaGray2,alphaGray5} from '../../Extras/grays'; 
 
+// const mapDivStyle = {
+// 	width: "100%",
+// 	height: window.innerHeight-40,
+// 	position:'absolute',
+// 	display:'flex',
+// 	flexDirection:'column',
+// 	top:60,
+// 	left:0,
+// 	alignItems:'center', 
+// 	justifyContent:'space-around'
+// }; 
+
 const mapDivStyle = {
 	width: "100%",
-	height: window.innerHeight-40,
-	position:'absolute',
-	display:'flex',
+	height:"100%",
+	display:'flex', 
 	flexDirection:'column',
-	top:60,
-	left:0,
-	align:'left',
-	alignItems:'flex-start'
+	justifyContent:'flex-start', 
+	alignItems:'center'
 }; 
 
 const loadingStyle = {
@@ -33,12 +42,11 @@ const loadingTextStyle = {
 
 var controlBarStyle = {
 	width:"100%", 
-	height:120, 
 	display:'flex', 
-	flexDirection:'column', 
-	justifyContent: 'flex-start', 
+	flexDirection:'row', 
+	justifyContent: 'center', 
 	alignItems:'center', 
-	paddingBottom:0,
+	paddingBottom:10,
 }; 
 
 const sliderBarStyle = {
@@ -47,37 +55,58 @@ const sliderBarStyle = {
 	alignItems:'center', 
 	justifyContent:'center', 
 	paddingBottom:20, 
+	paddingLeft:5, 
+	paddingRight:5,
 }; 
 
 const buttonDivStyle = {
-	height:30, 
-	width:"60%", 
+	height:70, 
+	width:"20%", 
 	display:'flex', 
 	flexDirection:'row', 
 	justifyContent:'space-around', 
 	alignItems:'center', 
+	paddingBottom:20,
+	paddingRight:3, 
+	paddingLeft:3,
 }; 
 
 const playButtonStyle = {
-	height:"24px",
-	width:"24px",
-	padding:"6px",
-	borderRadius:"24px"
+	height:"32px",
+	width:"32px",
+	borderRadius:"32px"
 }; 
 
 const pauseButtonStyle = {
-	height:"24px",
-	width:"24px",
-	padding:"6px",
-	borderRadius:"24px"
+	height:"32px",
+	width:"32px",
+	borderRadius:"32px"
 }; 
 
 const soundButtonStyle = {
-	height:"24px",
-	width:"24px",
-	padding:"6px",
-	borderRadius:"24px"
+	height:"32px",
+	width:"32px",
+	borderRadius:"32px"
 }; 
+
+const statRowStyle = {
+	display:'flex', 
+	flexDirection:'row', 
+	width:"100%", 
+	justifyContent:'space-between', 
+	alignItems:'center', 
+	fontFamily:'courier', 
+	fontSize:14, 
+	fontWeight:300, 
+	color:'white', 
+}
+
+const dataFlexStyle = {
+	display:'flex', 
+	flexDirection:'column', 
+	height:window.innerHeight-60, 
+	width:"100%", 
+}
 
 export {
 	mapDivStyle, 
@@ -89,4 +118,5 @@ export {
 	playButtonStyle, 
 	pauseButtonStyle, 
 	soundButtonStyle, 
+	statRowStyle, 
 }

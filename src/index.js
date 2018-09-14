@@ -20,6 +20,9 @@ import {
   faPlayCircle,
   faVolumeOff, 
   faVolumeUp, 
+  faInfoCircle, 
+  faInfo, 
+  faUndo,
 } from '@fortawesome/free-solid-svg-icons';
 // Add them to our library. 
 library.add(
@@ -33,6 +36,9 @@ library.add(
 	faPauseCircle, 
 	faVolumeOff, 
 	faVolumeUp,
+	faInfoCircle, 
+	faInfo, 
+	faUndo, 
 );
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

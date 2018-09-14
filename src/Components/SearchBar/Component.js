@@ -27,15 +27,13 @@ export default class SearchBar extends Component{
 	  	var percent = "80%"; 
   	}
     // We need to map the results an array: 
-    this.state = {value:'',submitFocus:false,textClick:false,Width:window.innerWidth,percent:percent,searchResults:[]};
+    this.state = {value:'',submitFocus:false,textClick:false,Width:window.innerWidth,percent:percent,searchResults:[],visBool:true};
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this); 
     this.componentWillUnmount = this.componentWillUnmount.bind(this); 
     this.textClick = this.textClick.bind(this); 
-    this.mouseOverSubmit = this.mouseOverSubmit.bind(this); 
-    this.mouseOffSubmit = this.mouseOffSubmit.bind(this); 
     this.updateDimensions = this.updateDimensions.bind(this);
     this.bottomArrayClick = this.bottomArrayClick.bind(this); 
     this.onLength = this.onLength.bind(this);
@@ -69,31 +67,25 @@ export default class SearchBar extends Component{
   }
 
   shouldComponentUpdate(nextProps,nextState){
-  	try{
-  		if(this.state == null || nextState == null){
-  			return false
-  		}
-	  	else if(this.state.Width > 600 && nextState.Width <= 600 ){
-	  		return true
-	  	}
-	  	else if(this.state.Width <= 600 && nextState.Width > 600 ){
-	  		return true
-	  	}
-	  	else{
-	  		return true
-	  	}
-	  }
-	  catch(error){
-	  	console.error(error)
-	  	return true
-	  }
+		if(this.state == null || nextState == null){
+			return false
+		}
+  	else if(this.state.Width > 600 && nextState.Width <= 600 ){
+  		return true
+  	}
+  	else if(this.state.Width <= 600 && nextState.Width > 600 ){
+  		return true
+  	}
+  	else{
+  		return true
+  	}
   }
 
 	async onLength(val){
 		// Search wikipedia with the string, val: 
 		var searchResults = await SearchWikipedia(val); 
 		if(typeof(searchResults) == "object" && searchResults.length > 0){
-			this.setState({searchResults:searchResults})
+			this.setState({searchResults:searchResults,visBool:true})
 		}
 	}
 
@@ -112,68 +104,44 @@ export default class SearchBar extends Component{
     this.setState({value:''})
   }
 
-  mouseOverSubmit(event){
-  	this.setState({submitFocus:true}); 
-  }
-
-  mouseOffSubmit(event){
-  	this.setState({submitFocus:false}); 
-  }
-
   textClick(event){
   	var textClicked = !this.state.textClicked; 
   	this.setState({textClicked:textClicked})
   }
 
   bottomArrayClick(){
-  	this.setState({searchResults:[]}); 
-  	this.props.arrowClickHandler(); 
+  	this.setState({searchResults:[],visBool:false}); 
   }
 
   render(){
-  	if(this.props.visBool == true){
-	  	return(
-	  		<div style = {{
-	  			width: this.state.percent, 
-	  			display:'flex', 
-	  			flexDirection:'column', 
-	  			justifyContent:'flex-start', 
-	  			alignItems:'space-between', 
-	  			zIndex:99,
-	  		}}>
-		  		<div style = {searchBarStyle}>
-		  			<form onSubmit={this.handleSubmit} >
-		  				<input 
-		  					type = "text"
-		  					value = {this.state.value}
-		  					onChange={this.handleChange}
-		  					placeholder = "Search Wikipedia"
-		  					onClick={this.textClick} 
-		  					style = {searchFieldStyle}
-		  				/>
-		  			</form>
-	  				<FontAwesomeIcon
-	  					icon="arrow-right"
-	  					onClick ={this.handleSubmit}
-	  					onMouseEnter = {this.mouseOverSubmit}
-	  					onMouseLeave	= {this.mouseOffSubmit}
-							style = { {
-	    						color: this.state.submitFocus == true ? "lightgray": "white", 
-									height:"60%",
-									width:"10%",
-									backgroundColor: this.state.submitFocus == true ? alphaGray3:alphaGray2, 
-									padding:"6px",
-									borderRadius:"40px", 
-								}
-							}
-						/>
-					</div>
-					<SearchResults searchResults = {this.state.searchResults} searchResultHandler = {this.props.searchResultHandler} arrowClickHandler = {this.bottomArrayClick}/>
+  	return(
+  		<div style = {{
+  			width: this.state.percent, 
+  			display:'flex', 
+  			flexDirection:'column', 
+  			justifyContent:'flex-start', 
+  			alignItems:'flex-start', 
+  			zIndex:99,
+  		}}>
+	  		<div style = {searchBarStyle}>
+	  			<form onSubmit={this.handleSubmit}>
+	  				<input 
+	  					type = "text"
+	  					value = {this.state.value}
+	  					onChange={this.handleChange}
+	  					placeholder = "Search Wikipedia"
+	  					onClick={this.textClick} 
+	  					style = {searchFieldStyle}
+	  				/>
+	  			</form>
 				</div>
-	  	)
-	  }///
-	  else{
-	  	return(null)
-	  }
+				<SearchResults 
+          searchResults       = {this.state.searchResults}
+          searchResultHandler = {this.props.searchResultHandler}
+          arrowClickHandler   = {this.bottomArrayClick}
+          visBool             = {this.state.visBool}
+        />
+			</div>
+  	)
 	}
 };

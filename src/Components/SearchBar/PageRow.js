@@ -7,13 +7,9 @@ import {alphaGray2,alphaGray3,alphaGray5} from '../../Extras/grays';
 export default class PageRow extends Component{
 
 	constructor(props){
-
 		super(props); 
-
 		var bgcolor = props.index % 2 == 0 ? alphaGray3 : alphaGray2; 
-
 		this.state               = {bgcolor:bgcolor,defaultbg:bgcolor}; 
-		this.searchResultHandler = props.searchResultHandler.bind(this,props.pageid,props.url); 
 		this.prepRow             = this.prepRow.bind(this); 
 		this.clickHandler        = this.clickHandler.bind(this); 
 	}
@@ -56,7 +52,7 @@ export default class PageRow extends Component{
 	  				backgroundColor:this.state.bgcolor,  
 	  				paddingLeft:0,
 	  		}}
-				onClick     = { ()      => this.props.searchResultHandler(this.props.pageid,this.props.url) }
+				onClick     = { ()      => {this.props.searchResultHandler(this.props.pageid,this.props.url); this.props.resultsClearFun();}}
 				onMouseDown = { (event) => this.clickHandler(event) }
 				onMouseUp   = { (event) => this.clickHandler(event) }
 			>

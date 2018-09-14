@@ -5,7 +5,7 @@ IP-LOCATION GRABBER
 
 // Setting baseURL depending on build environment: 
 const devMode = process.env.NODE_ENV !== 'production'; 
-const baseURL = devMode ?  "http://10.0.0.201:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
+const baseURL = devMode ?  "http://172.30.1.243:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
 
 // Assembling the function for export: 
 export default async function GetLocation(userip,server){

@@ -4,16 +4,17 @@
 import {alphaBlack} from '../Extras/grays'; 
 
 const mainStyle = {
-	height:window.innerHeight,
-	display:"flex", 
-	flexDirection:"column", 
-	alignItems:"flex-start",
-	justifyContent:"flex-start",
+	height:"100%",
+	width:"100%", 
 	backgroundColor:alphaBlack,
 	padding:0,
 	fontFamily:'courier-new',
 	paddingLeft:0, 
-	paddingBotton:10,
+	paddingBottom:10,
+	display:'flex', 
+	flexDirection:'column', 
+	alignItems:'flex-start', 
+	justifyContent:'flex-start', 
 }; 
 
 export {  

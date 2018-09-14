@@ -2,11 +2,12 @@
 const topRowStyle = {
 	display:'flex', 
 	flexDirection:'row',
-	justifyContent:'center', 
+	justifyContent:'space-between', 
 	alignItems:'center', 
-	width:"100%", 
+	width:"97%", 
 	paddingBottom:5, 
-	height:50
+	paddingTop:5, 
+	paddingLeft:5,
 }
  
 const titleStyle = {

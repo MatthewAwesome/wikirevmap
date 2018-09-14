@@ -76,6 +76,19 @@ const pageRowStyle = {
 	paddingLeft:0,
 }; 
 
+const searchResultStyle = {
+	flexDirection:'column', 
+	display:'flex',
+	justifyContent:'flex-start', 
+	alignItems:'flex-start',
+	width: "100%",
+	height:"100%",
+	top:60,
+	position:'absolute', 
+	backgroundColor:alphaGray2,  
+	zIndex:99,
+}
+
 const letterStyle = thumbStyle; 
 letterStyle.paddingLeft = 10; 
 
@@ -88,4 +101,5 @@ export {
 	minSearchResultStyle, 
 	letterStyle, 
 	pageRowStyle,
+	searchResultStyle, 
 }

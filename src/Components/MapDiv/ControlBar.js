@@ -23,17 +23,22 @@ export default class ControlBar extends Component{
     	playing:false, 
     	muted:false,
     	width:window.innerWidth,
+    	height:window.innerHeight, 
 		}; 
 
 		this.onPause = this.onPause.bind(this); 
 		this.onPlay = this.onPlay.bind(this); 
 		this.onMute = this.onMute.bind(this); 
 		this.updateDimensions = this.updateDimensions.bind(this); 
+		this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this); 
 	}
-
+  // Listen to resize events, and call this.updateDimensions() when on is detected. 
+  componentDidMount() {
+    window.addEventListener("resize", this.updateDimensions);
+  }
 	// To handle browser resize: 
   updateDimensions() {
-    this.setState({width: window.innerWidth});
+    this.setState({width: window.innerWidth,height:window.innerHeight});
   }; 
 
   // Lifecycle methods to keep things zippy.
@@ -49,15 +54,15 @@ export default class ControlBar extends Component{
   	else if(nextState && nextState.width != this.state.width){
   		return true; 
   	}
+  	else if(nextState && nextState.height != this.state.height){
+  		return true; 
+  	}
   	else{
   		return false; 
   	}
   }
 
-  // Listen to resize events, and call this.updateDimensions() when on is detected. 
-  componentDidMount() {
-    window.addEventListener("resize", this.updateDimensions);
-  }
+
 
   // Button/slider handlers:
 
@@ -97,25 +102,33 @@ export default class ControlBar extends Component{
 		// Package it all into a div and sent it on its way... 
 		return(
 			<div style = {controlBarStyle}>
-				<div style = {sliderBarStyle}>
-					<Slider 
-						min      = {0}
-						max      = {60}
-						value    = {this.props.sliderVal}
-						onChange = {this.props.onSliderChange}
-						labels   = {this.props.labels}
-					/>
-				</div>
 				<div style = {buttonDivStyle}>
+					<FontAwesomeIcon
+						icon="pause-circle"
+						onClick ={this.onPause}
+						style = {pauseButtonStyle}
+					/>
 					<FontAwesomeIcon
 						icon="play-circle"
 						onClick ={this.onPlay}
 						style = {playButtonStyle}
 					/>
+				</div>
+				<div style = {sliderBarStyle}>
+					<Slider 
+						min      = {0}
+						max      = {594}
+						value    = {this.props.sliderVal}
+						onChange = {this.props.onSliderChange}
+						labels   = {this.props.labels}
+						tooltip={true}
+					/>
+				</div>
+				<div style = {buttonDivStyle}>
 					<FontAwesomeIcon
-						icon="pause-circle"
-						onClick ={this.onPause}
-						style = {pauseButtonStyle}
+						icon="undo"
+						onClick ={this.onMute}
+						style = {soundButtonStyle}
 					/>
 					<FontAwesomeIcon
 						icon={volIcon}

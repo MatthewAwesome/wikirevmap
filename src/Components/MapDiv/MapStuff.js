@@ -16,7 +16,8 @@ const baseLayout = {
     coastlinewidth:1, 
     bgcolor:'black',
     margin:{l:0,r:0,t:0,b:0},
-    lonaxis:{range:[-180,180]}
+    lonaxis:{range:[-180,180]}, 
+    lataxis:{range:[-60,90]},
   },
   margin:{l:0,r:0,t:0,b:0},
   plot_bgcolor:"black",
@@ -27,6 +28,7 @@ const baseLayout = {
     bgcolor:'white', 
     bordercolor:'white', 
   },
+  height:window.innerHeight-260, 
 };
 
 export{baseLayout}; 

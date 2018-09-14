@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"; 
 import {titleStyle, topRowStyle} from './styles'; 
+import SearchBar from '../SearchBar/Component';
 
 
 export default class TopBar extends Component {
@@ -8,16 +9,8 @@ export default class TopBar extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			searchFocus:this.props.searchSelected, 
-			randFocus:false, 
-			randSelected:false, 
 			width:window.innerWidth, 
 		}; 
-		this.mouseOnSearch = this.mouseOnSearch.bind(this); 
-		this.mouseOffSearch =  this.mouseOffSearch.bind(this); 
-		this.mouseOnRand = this.mouseOnRand.bind(this); 
-		this.mouseOffRand = this.mouseOffRand.bind(this);  
-		this.searchClickListener = this.searchClickListener.bind(this);
 		this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this); 
 		this.updateDimensions = this.updateDimensions.bind(this); 
 	}
@@ -47,39 +40,27 @@ export default class TopBar extends Component {
 			return false 
 		}
 	}
-	// Some class methods to make things pop: 
 
-	mouseOnSearch(event){
-		this.setState({searchFocus:true,viewSearchBar:true}); 
-	};
-
-	mouseOffSearch(event){
-		var searchView = this.props.searchSelected; 
-		this.setState({searchFocus:searchView,viewSearchBar:searchView}); 
-
-	};
-
-	mouseOnRand(event){
-		this.setState({randFocus:true}); 
-	};
-
-	mouseOffRand(event){
-		this.setState({randFocus:false}); 
-	};
-
-  searchClickListener(){
-  	// Toggle search selection! 
-  	var searchSelected = !this.state.searchSelected; 
-  	this.setState({searchSelected:this.props.searchSelected}); 
-  	this.props.handleSearchClick('top'); 
-  }
 
 	render(){
 		return(
 			<div style = {topRowStyle}>
-	  		<div style = {titleStyle}>
-					WIKI_REV_MAP
-				</div>
+				<SearchBar 
+					searchResultHandler = {this.props.searchResultHandler}
+				/>
+				<FontAwesomeIcon
+					icon="info"
+					style = { {
+  						color: this.state.searchFocus ? "darkgray": "black", 
+							height:"32px",
+							width:"32px",
+							backgroundColor: this.state.searchFocus  ? "lightgray" : "white", 
+							backgroundColor: this.props.searchSelected  ? "lightgray" : "white", 
+							padding:"6px",
+							borderRadius:"32px"
+					}
+				}
+				/>
 			</div>
 		)
 	}

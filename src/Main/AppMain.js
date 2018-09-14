@@ -27,25 +27,42 @@ export default class AppMain extends Component{
 			pageid:null, 
 			pageurl:null
 		}; 
-		this.handleSearchClick = this.handleSearchClick.bind(this); 
 		this.searchResultHandler = this.searchResultHandler.bind(this);
+		this.updateDimensions    = this.updateDimensions.bind(this); 
 	};
 	
-	handleSearchClick(source){
-		if(source == 'top'){
-			var selection = !this.state.searchSelected; 
-			this.setState({searchSelected:selection,viewSearchBar:selection}); 
+	shouldComponentUpdate(nextProps,nextState){
+		console.log('should update?')
+		if(nextProps == null){
+			return true
+		}
+		else if(nextState && nextState.pageid != this.state.pageid){
+			return true
+		}
+	  else if(nextState && nextState.width != this.state.width){
+	  	console.log('updating?')
+			return true; 
+		}
+	  else if(nextState && nextState.height != this.state.height){
+			return true; 
 		}
 		else{
-			var selection = !this.state.searchSelected; 
-			this.setState({searchSelected:false,viewSearchBar:selection,searchFocus:false}); 
+			return false 
 		}
-	};
+	}
 
-  // This is the is called when a user clicks on a page of interest: 
+
+	componentDidMount() {
+    window.addEventListener("resize", this.updateDimensions);
+  }
+
+	updateDimensions() {
+  	// Lets set the dims of our view in this function: 
+    this.setState({width: window.innerWidth,height:window.innerHeight});
+  }; 
+
+  // This is the is called when a user clicks on a page of interest. We update the map accordingly. 
 	async searchResultHandler(pageid,pageurl){
-		// Clear data container: 
-		await this.handleSearchClick(); 
 		await this.setState({pageid:pageid,pageurl:pageurl}); 
 	}
 
@@ -53,14 +70,13 @@ export default class AppMain extends Component{
 	render(){ 
 		return (
 			<div style = {mainStyle}>
-				<TopBar handleSearchClick = {this.handleSearchClick} searchSelected = {this.state.searchSelected}/>
-				<SearchBar 
-					visBool = {this.state.viewSearchBar} 
-					onClick ={this.handleSearchClick}
+				<TopBar 
 					searchResultHandler = {this.searchResultHandler}
-					arrowClickHandler = {this.handleSearchClick}
 				/>
-				<MapDiv pageid={this.state.pageid} pageurl={this.state.pageurl} />
+				<MapDiv 
+					pageid={this.state.pageid}
+					pageurl={this.state.pageurl} 
+				/>
 			</div>
 		); 
 	}

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PageRow from './PageRow'; 
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"; 
-import {minSearchResultStyle} from './styles'; 
+import {minSearchResultStyle,searchResultStyle} from './styles'; 
 import {alphaGray2} from '../../Extras/grays';
 
 export default class SearchResults extends Component {
@@ -9,7 +9,7 @@ export default class SearchResults extends Component {
 	constructor(props){
 		super(props); 
 		this.resultsToComponent = this.resultsToComponent.bind(this); 
-		this.arrowClickHandler = props.arrowClickHandler.bind(this); 
+		this.arrowClickHandler  = props.arrowClickHandler.bind(this); 
 	}
 
 	shouldComponentUpdate(nextProps,nextState){
@@ -32,10 +32,32 @@ export default class SearchResults extends Component {
 					var title = element.title
 				}
 				if(element.image){
-					return(<PageRow imgUrl={element.image} pageTitle = {title} searchResultHandler = {this.props.searchResultHandler} pageid = {element.pageid} index = {index} url ={element.url} key ={index.toString()}/> )
+					return(
+						<PageRow 
+							imgUrl              = {element.image}
+							pageTitle           = {title}
+							searchResultHandler = {this.props.searchResultHandler}
+							pageid              = {element.pageid}
+							index               = {index}
+							url                 = {element.url}
+							key                 = {index.toString()}
+							resultsClearFun     = {this.props.arrowClickHandler}
+						/> 
+					)
 				}///
 				else{
-					return(<PageRow Color={element.color} pageTitle = {title} searchResultHandler = {this.props.searchResultHandler} pageid = {element.pageid} index = {index} url = {element.url} key ={index.toString()}/> )
+					return(
+						<PageRow
+							Color               = {element.color}
+							pageTitle           = {title}
+							searchResultHandler = {this.props.searchResultHandler}
+							pageid              = {element.pageid}
+							index               = {index}
+							url                 = {element.url}
+							key                 = {index.toString()}
+							resultsClearFun     = {this.props.arrowClickHandler}
+						/> 
+					)
 				}
 			}
 		)
@@ -46,16 +68,7 @@ export default class SearchResults extends Component {
 		if(typeof(this.props.searchResults) == 'object' && this.props.searchResults.length > 0){
 			var Components = this.resultsToComponent(); 
 			return(
-				<div 
-					style = {{
-	  				flexDirection:'column', 
-	  				display:'flex',
-	  				justifyContent:'flex-start', 
-	  				alignItems:'flex-start',
-	  				width: "100%",
-	  				backgroundColor:alphaGray2,  
-					}}
-				>
+				<div style = {searchResultStyle}>
 					{Components}
 					<div style = {minSearchResultStyle} onClick = {this.props.arrowClickHandler}>
 						<FontAwesomeIcon
