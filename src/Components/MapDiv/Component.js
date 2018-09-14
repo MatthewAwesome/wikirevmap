@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
 import {mapDivStyle,statRowStyle} from './styles'; 
-import {baseLayout} from './MapStuff';
+import {baseMapLayout,baseLineLayout,baseLineData} from './plotStuff';
 import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
 import GetRevs from './helperFunctions/GetRevs'; 
 import GetLocation from './helperFunctions/GetLocation'; 
@@ -35,7 +35,7 @@ class MapDiv extends Component{
 
     // Initialize the state container: 
     this.state = { data: [{type: 'scattergeo'}], 
-	    layout: baseLayout,
+	    layout: baseMapLayout,
 	    frameData: [],
 	    config: {displayModeBar: false},
 	    rawdata:[],
@@ -45,7 +45,7 @@ class MapDiv extends Component{
 	    revCount:0, 
 	    maxTimes:1,
 	    fetching:false, 
-	    baseLayout:baseLayout, 
+	    baseMapLayout:baseMapLayout, 
 	    baseData:[{type: 'scattergeo'}],
 	    cleared:true, 
 	    width:window.innerWidth, 
@@ -61,7 +61,7 @@ class MapDiv extends Component{
 	    lineEnds:null,
 	    labels:{}, 
 	    tstep:null, 
-	    lineData:[],
+	    lineData:baseLineData,
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -118,7 +118,7 @@ class MapDiv extends Component{
 			await this.setState({
 				frameData:[],
 				data:this.state.baseData,
-				layout:this.state.baseLayout,
+				layout:this.state.baseMapLayout,
 				sliderSteps:[],
 				now:D.getTime(),
 				revPullComplete:false,
@@ -135,7 +135,7 @@ class MapDiv extends Component{
 				currentFrame:0, 
 				sliderPosition:0, 
 				anim:null, 
-				lineData:[], 
+				lineData:baseLineData, 
 				tstep:null, 
 			});  
 		}
@@ -152,19 +152,24 @@ class MapDiv extends Component{
 
 		// Setting state signifying that we have pulled all the revs for a given page: 
 		else if(prevState.cont != null && this.state.cont == null){
+			console.log('no more continues')
 			// And we tack on end label: 
 			var labels   = this.state.labels; 
 			var tEnd     = new Date(this.state.mapEnds[59]); 
+			console.log(tEnd); 
 			labels[599] = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
 			var tMid     = new Date(this.state.mapEnds[29]); 
-			labels[599] = tMid.toGMTString().slice(8,16); 
+			labels[299] = tMid.toGMTString().slice(8,16); 
 			this.setState({revPullComplete:true,labels:labels})
 			console.log('complete\n',this.state.frameData.length)
 		}
 		else if(prevState.revPullComplete == false && this.state.revPullComplete == true){
+			console.log('revPullComplete')
+			console.log(this.state.lineData);
 			var labels   = this.state.labels; 
 			var tEnd     = new Date(this.state.mapEnds[59]); 
+			console.log(tEnd); 
 			labels[599] = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
 			var tMid     = new Date(this.state.mapEnds[29]); 
@@ -198,7 +203,11 @@ class MapDiv extends Component{
 		}
 
 		// Tells us we have new frames and are ready to display accordingly: 
-		else if(nextState && this.state.frameData.length && this.state.frameData.length != nextState.frames.length){
+		else if(nextState && this.state.frameData.length && this.state.frameData.length != nextState.frameData.length){
+			return true; 
+		}
+
+		else if(nextState && nextState.lineData != this.state.lineData){
 			return true; 
 		}
 
@@ -277,7 +286,6 @@ class MapDiv extends Component{
 			lastTime = lastTime.getTime(); 
 			// And seeing how many frames we can construct according to lastTime. 
 			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
-			console.log(framesToMake)
 			// Clean up the revs // 
 			var accRevs   = this.state.revArray.concat(revData.revs); 
       revData.revs  = FilterRevs(revData.revs); 
@@ -350,7 +358,7 @@ class MapDiv extends Component{
 		// Map frames:  
 		var numberOfMapFrames  = Math.ceil(timePercent * 60) - this.state.frameData.length; 
 		// Line frames: 
-		var numberOfLineFrames = Math.ceil(timePercent * 120) - this.state.frameData.length;
+		var numberOfLineFrames = Math.ceil(timePercent * 120) - this.state.lineData[0].x.length;
 		// return the numbers:  
 		return {mapFrames:numberOfMapFrames,lineFrames:numberOfLineFrames}
 	}
@@ -359,14 +367,17 @@ class MapDiv extends Component{
 	getLineFrames(revs,framesToMake){
 		// Establish where we left off: 
 		var lineData = this.state.lineData; 
+		var startI = this.state.lineData[0].x.length; 
+		var maxI = framesToMake + this.state.lineData[0].x.length; 
+		console.log(framesToMake,maxI,startI);
 		// Iterate and add more data entries to this thing: 
-		for(let i = lineData.length; i < framesToMake + lineData.length; i++){
+		for(let i = startI; i < maxI; i++){
 			var startTime = i == 0 ? this.state.articleAge : this.state.lineEnds[i-1]; 
 			var endTime   = this.state.lineEnds[i]; 
 			// Determine how many revs are between these point. 
 			var filteredRevs = revs.filter( (x) => {
 					var timeObject = new Date(x.timestamp); 
-					var msTime = timeObject.getTime(); 
+					var msTime     = timeObject.getTime(); 
 					if( msTime >= startTime && msTime < endTime ){
 						return true; 
 					}
@@ -375,8 +386,13 @@ class MapDiv extends Component{
 					}
 				}
 			); 
-			console.log('line revs: ', filteredRevs.length);  
+			// Coolness, lets add this data to our array as x-y pairs!
+			lineData[0].x.push(i); 
+			lineData[0].y.push(filteredRevs.length); 
 		}
+		console.log(lineData[0]); 
+		// Okay, we've finished interating, lets update the state; 
+		this.setState({lineData:lineData})
 	}
 
 	// Function to place data into frames as dictated by the incoming data: 
@@ -661,7 +677,7 @@ class MapDiv extends Component{
 				</div>
 			)
 		}
-		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData){
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.revPullComplete == true){
 			return(
 				<div style = {mapDivStyle}>
 		      <Plot
@@ -677,34 +693,12 @@ class MapDiv extends Component{
 		      {this.renderStatRow()}
 		      <div style = {{width:"100%",display:'flex',flexDirection:'row',justifyContent:'center'}}>
 		      <Plot
-		        data={[
-		          {
-		            x: [0, 1, 2],
-		            y: [100, 0, 10],
-		            type: 'scatter',
-		            mode: 'lines',
-		            hoverinfo: 'none'
-		          },
-		          {
-		            x: [0, 1, 2],
-		            y: [10, 0, 20],
-		            type: 'scatter',
-		            mode: 'lines',
-		            marker:{color:'red'}, 
-		            hoverinfo: 'none'
-		          },
-		        ]}
+		        data   = {this.state.lineData}
 		        config = {{displayModeBar: false}}
-		        layout ={{
-		        	height: 80,
-		        	width:window.innerWidth*0.6,
-		        	plot_bgcolor:"black",
-		        	paper_bgcolor:"#000",
-		        	margin:{l:0,r:0,t:0,b:0},
-		        	showlegend: false,
-		        	hoverinfo: 'none',
-		        }}
+		        layout = {baseLineLayout}
 		        style  = {{width:"60%", height:80,overflow:'hidden',align:'center'}}
+		       	onInitialized    = {(fig) => {this.setState({fig})} }
+	          onRelayout       = {(fig) => {this.setState({fig})} }
 		      />
 		      </div>
 		      {this.renderControlBar()}
