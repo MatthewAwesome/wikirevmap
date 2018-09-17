@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
-import {mapDivStyle,statRowStyle} from './styles'; 
+import {mapDivStyle,statRowStyle,timePlotContainer} from './styles'; 
 import {baseMapLayout,baseLineLayout,baseLineData} from './plotStuff';
 import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
 import GetRevs from './helperFunctions/GetRevs'; 
@@ -12,6 +12,7 @@ import Slider from 'react-rangeslider';
 import ReactTimeout from 'react-timeout'; 
 import 'react-rangeslider/lib/index.css'; 
 import ControlBar from './ControlBar'; 
+import TimePlot from './TimePlot'; 
 
 /* Some notes on what we need to do here: 
 
@@ -24,6 +25,29 @@ import ControlBar from './ControlBar';
 
 */
 
+const emptyLines = [
+		  {
+		    x:[], 
+		    y:[], 
+		    type: 'scatter',
+		    mode: 'lines',
+		    marker:{color:'lightgray'}, 
+		    hoverinfo: 'none',
+		    fillcolor:'darkgray',
+		    fill:'tozeroy', 
+		  }, 
+		  {
+		    x:[], 
+		    y:[], 
+		    type: 'scatter',
+		    mode: 'lines',
+		    marker:{color:'white'}, 
+		    hoverinfo: 'none',
+		    fillcolor:'lightgray', 
+		    fill:'tozeroy', 
+		  }, 
+]; 
+
 class MapDiv extends Component{
 
 	constructor(props){
@@ -32,13 +56,33 @@ class MapDiv extends Component{
 		super(props); 
 		// Some variables for potential use: 
     var D = new Date(); 
-
+    var lData = [
+		  {
+		    x:[], 
+		    y:[], 
+		    type: 'scatter',
+		    mode: 'lines',
+		    marker:{color:'lightgray'}, 
+		    hoverinfo: 'none',
+		    fillcolor:'darkgray',
+		    fill:'tozeroy', 
+		  }, 
+		  {
+		    x:[], 
+		    y:[], 
+		    type: 'scatter',
+		    mode: 'lines',
+		    marker:{color:'white'}, 
+		    hoverinfo: 'none',
+		    fillcolor:'lightgray', 
+		    fill:'tozeroy', 
+		  }, 
+		]; 
     // Initialize the state container: 
     this.state = { data: [{type: 'scattergeo'}], 
 	    layout: baseMapLayout,
 	    frameData: [],
 	    config: {displayModeBar: false},
-	    rawdata:[],
 	    now:D.getTime(),
 	    revPullComplete:false,
 	    bday:null, 
@@ -61,7 +105,8 @@ class MapDiv extends Component{
 	    lineEnds:null,
 	    labels:{}, 
 	    tstep:null, 
-	    lineData:baseLineData,
+	    lineData:lData,
+	    currentSize:'', 
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -105,7 +150,7 @@ class MapDiv extends Component{
 
   // componentDidUpdate is used to fetch and/or clear data for wiki_revs: 
 	async componentDidUpdate(prevProps,prevState){
-
+		console.log('refreshing')
 		// This ie executed when the user initial comes into the app.  
 		if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
 			// This call pulls the first rev batch: 
@@ -114,13 +159,36 @@ class MapDiv extends Component{
 
 		// Do we need to clear existing data, users has requested a new page: 
 		else if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
-			var D = new Date(); 
-			await this.setState({
+			console.log('clearing')
+			var DD = new Date(); 
+			var emptyLineData = [
+		  {
+		    x:[], 
+		    y:[], 
+		    type: 'scatter',
+		    mode: 'lines',
+		    marker:{color:'lightgray'}, 
+		    hoverinfo: 'none',
+		    fillcolor:'darkgray',
+		    fill:'tozeroy', 
+		  }, 
+		  {
+		    x:[], 
+		    y:[], 
+		    type: 'scatter',
+		    mode: 'lines',
+		    marker:{color:'white'}, 
+		    hoverinfo: 'none',
+		    fillcolor:'lightgray', 
+		    fill:'tozeroy', 
+		  }, 
+		]; 
+		this.setState({
 				frameData:[],
 				data:this.state.baseData,
 				layout:this.state.baseMapLayout,
 				sliderSteps:[],
-				now:D.getTime(),
+				now:DD.getTime(),
 				revPullComplete:false,
 				bday:null,
 				articleAge:null, 
@@ -135,13 +203,17 @@ class MapDiv extends Component{
 				currentFrame:0, 
 				sliderPosition:0, 
 				anim:null, 
-				lineData:baseLineData, 
+				lineData:emptyLineData, 
 				tstep:null, 
+				revArray:[], 
+				cont:null, 
+				currentSize:'',
 			});  
 		}
 
 		// Fetching after the clear: 
-		else if(prevState.cleared == false && this.state.cleared == true){
+		else if(prevState.cleared == false && this.state.cleared == true ){
+			console.log('pulling more revs')
 			await this.RevPuller(); 
 		}
 
@@ -156,7 +228,6 @@ class MapDiv extends Component{
 			// And we tack on end label: 
 			var labels   = this.state.labels; 
 			var tEnd     = new Date(this.state.mapEnds[59]); 
-			console.log(tEnd); 
 			labels[599] = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
 			var tMid     = new Date(this.state.mapEnds[29]); 
@@ -166,7 +237,6 @@ class MapDiv extends Component{
 		}
 		else if(prevState.revPullComplete == false && this.state.revPullComplete == true){
 			console.log('revPullComplete')
-			console.log(this.state.lineData);
 			var labels   = this.state.labels; 
 			var tEnd     = new Date(this.state.mapEnds[59]); 
 			console.log(tEnd); 
@@ -288,6 +358,17 @@ class MapDiv extends Component{
 			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
 			// Clean up the revs // 
 			var accRevs   = this.state.revArray.concat(revData.revs); 
+			// Getting the size: 
+			var currentSize = accRevs[accRevs.length-1].size/1000; 
+			currentSize = currentSize.toString(); 
+			if(currentSize.indexOf('.') != -1 && currentSize.indexOf('.') >= 4 ){
+				currentSize = currentSize.slice(0,currentSize.indexOf('.')); 
+			}
+			else{
+				currentSize = currentSize.slice(0,4); 
+			}
+			currentSize = currentSize + 'kB'; 
+			// Want 4 digits or less. 
       revData.revs  = FilterRevs(revData.revs); 
       revData.revs  =  RemoveDuplicateIps(revData.revs); 
       revData.revs  = await CheckAndAppend(revData.revs,this.state.revArray);  
@@ -335,13 +416,15 @@ class MapDiv extends Component{
 					labels:labels, 
 					layout:layout, 
 					revPullComplete:complete,
+					currentSize:currentSize,
 				});			
 			}
 			else{
 				this.setState({
 					revCount:revCount,
 					revArray:accRevs,
-					cont:cont
+					cont:cont,
+					currentSize:currentFrame, 
 				});		
 			}
 		}
@@ -390,7 +473,7 @@ class MapDiv extends Component{
 			lineData[0].x.push(i); 
 			lineData[0].y.push(filteredRevs.length); 
 		}
-		console.log(lineData[0]); 
+		console.log('in frame grab', lineData[0]); 
 		// Okay, we've finished interating, lets update the state; 
 		this.setState({lineData:lineData})
 	}
@@ -580,7 +663,7 @@ class MapDiv extends Component{
 		// Making sure we have frames, and that we want to shift from pause to play: 
 		if(this.state.frameData.length > 0 && this.state.anim == null){
 			// Animate:
-			this.setState({anim:this.props.setInterval(this.animate, 30)}); 	
+			this.setState({anim:this.props.setInterval(this.animate, 15)}); 	
 		}	
 		// Else, we are playing, and we seek tp pause: 
 		else if(this.state.anim != null){
@@ -626,14 +709,14 @@ class MapDiv extends Component{
 		if(this.state.frameData.length > 0){
 			return(
 				<div style ={statRowStyle}>
-					<div style ={{width:window.innerWidth/3,height:15,alignItems:'center',justifyContent:'center',display:'flex',flexDirection:'row',fontSize:12}}>
-						SIZE
+					<div style ={{width:window.innerWidth/3,height:30,alignItems:'center',justifyContent:'center',display:'flex',flexDirection:'row',fontSize:12}}>
+						{this.state.currentSize}
 					</div>
-					<div style ={{width:window.innerWidth/3,height:15,alignItems:'center',justifyContent:'center',display:'flex',fontSize:12}}>
-						REV COUNT
+					<div style ={{width:window.innerWidth/3,height:30,alignItems:'center',justifyContent:'center',display:'flex',fontSize:12}}>
+						{this.state.revArray.length}{' '}EDITS
 					</div>
-					<div style = {{width:window.innerWidth/3,height:15,alignItems:'center',justifyContent:'center',display:'flex',fontSize:12}}>
-						UNIQUE CONTRIBUTORS
+					<div style = {{width:window.innerWidth/3,height:30,alignItems:'center',justifyContent:'center',display:'flex',fontSize:12}}>
+						CONTRIBUTORS
 					</div>
 				</div>
 			); 
@@ -677,33 +760,56 @@ class MapDiv extends Component{
 				</div>
 			)
 		}
-		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.revPullComplete == true){
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.frameData.length == 0){
 			return(
 				<div style = {mapDivStyle}>
-		      <Plot
-		        data={this.state.data}
-		        layout           = {this.state.layout}
-		        config           = {{displayModeBar: false}}
-		        style            = {{width:"100%", height:window.innerHeight-260}}
-		        useResizeHandler = {true}
-	          onInitialized    = {(figure) => this.setState(figure)}
-	          onRelayout       = {(figure) => {this.setState(figure)}}
-		      >
-		      </Plot>
-		      {this.renderStatRow()}
-		      <div style = {{width:"100%",display:'flex',flexDirection:'row',justifyContent:'center'}}>
-		      <Plot
-		        data   = {this.state.lineData}
-		        config = {{displayModeBar: false}}
-		        layout = {baseLineLayout}
-		        style  = {{width:"60%", height:80,overflow:'hidden',align:'center'}}
-		       	onInitialized    = {(fig) => {this.setState({fig})} }
-	          onRelayout       = {(fig) => {this.setState({fig})} }
-		      />
+					<div style = {timePlotContainer}>
+			      <Plot
+			        data={this.state.data}
+			        layout           = {this.state.layout}
+			        config           = {{displayModeBar: false}}
+			        style            = {{width:"100%", height:window.innerHeight-260}}
+		          onInitialized    = {(figure) => this.setState(figure)}
+		          onRelayout       = {(figure) => {this.setState(figure)}}
+			      />
 		      </div>
+		    </div>
+			)
+		}
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.height >= 400){
+			return(
+				<div style = {mapDivStyle}>
+					<div style = {timePlotContainer}>
+			      <Plot
+			        data={this.state.data}
+			        layout           = {this.state.layout}
+			        config           = {{displayModeBar: false}}
+			        style            = {{width:"100%", height:window.innerHeight-260}}
+		          onInitialized    = {(figure) => this.setState(figure)}
+		          onRelayout       = {(figure) => {this.setState(figure)}}
+			      />
+		      </div>
+		      {this.renderStatRow()}
+		      <TimePlot lineData={this.state.lineData} pageid = {this.props.pageid}/>
 		      {this.renderControlBar()}
 		    </div>
 			)
+		}
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.height < 400){
+			return(
+				<div style = {mapDivStyle}>
+					<div style = {timePlotContainer}>
+			      <Plot
+			        data={this.state.data}
+			        layout           = {this.state.layout}
+			        config           = {{displayModeBar: false}}
+			        style            = {{width:"100%", height:window.innerHeight-260}}
+		          onInitialized    = {(figure) => this.setState(figure)}
+		          onRelayout       = {(figure) => {this.setState(figure)}}
+			      />
+		      </div>
+		    </div>
+	    )			
 		}
 		else{
 			return(

@@ -8,6 +8,7 @@ const htmlPlugin = new HtmlWebPackPlugin({
   filename: "./index.html"
 });
 
+
 module.exports = {
 	module:{
 		rules:[

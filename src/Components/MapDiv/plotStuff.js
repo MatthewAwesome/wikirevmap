@@ -44,10 +44,11 @@ const baseLineLayout = {
     fixedrange: true, 
     range: [0, 120]
   }, 
+  datarevision:0, 
 }; 
 
 // Instantiate the data structure for our line data: 
-var baseLineData = [
+const baseLineData = [
   {
     x:[], 
     y:[], 

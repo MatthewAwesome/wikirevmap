@@ -15,11 +15,11 @@ import {alphaGray2,alphaGray5} from '../../Extras/grays';
 
 const mapDivStyle = {
 	width: "100%",
-	height:"100%",
 	display:'flex', 
 	flexDirection:'column',
 	justifyContent:'flex-start', 
-	alignItems:'center'
+	alignItems:'center', 
+	height:window.innerHeight-60,
 }; 
 
 const loadingStyle = {
@@ -108,6 +108,21 @@ const dataFlexStyle = {
 	width:"100%", 
 }
 
+const timePlotContainer = {
+	width:"100%",
+	display:'flex',
+	flexDirection:'row',
+	justifyContent:'center', 
+	alignItems:'flex-start',
+}
+
+const timePlotStyle = {
+	width:"60%",
+	height:80,
+	overflow:'hidden',
+	align:'center', 
+}
+
 export {
 	mapDivStyle, 
 	loadingStyle,
@@ -119,4 +134,6 @@ export {
 	pauseButtonStyle, 
 	soundButtonStyle, 
 	statRowStyle, 
+	timePlotContainer, 
+	timePlotStyle, 
 }

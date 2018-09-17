@@ -15,6 +15,7 @@ import MapDiv from '../Components/MapDiv/Component';
 // Import the style for AppMain: 
 import {mainStyle} from './styles'; 
 
+console.log(process.env); 
 export default class AppMain extends Component{
 	constructor(props){
 		super(props); 
