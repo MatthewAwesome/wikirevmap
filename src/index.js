@@ -47,7 +47,7 @@ library.add(
 
 const Index = () => {
 	return (
-		<div style = {{height:window.innerHeight}}>
+		<div style = {{height:"100%"}}>
 			<AppMain/>
 		</div>
 	); 

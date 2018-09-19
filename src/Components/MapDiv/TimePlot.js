@@ -3,18 +3,24 @@ A Component to make a TimePlot.
 **/
 import React, { Component } from 'react';
 import Plot from 'react-plotly.js';
-import {timePlotContainer,timePlotStyle} from './styles'; 
+import {timePlotContainer} from './styles'; 
 import {baseLineLayout} from './plotStuff';
+
+var timePlotStyle = {
+	width:window.innerWidth*0.6+240,
+	height:80,
+	overflow:'hidden',
+	align:'center',
+	paddingLeft:0, 
+	paddingRight:0, 
+}; 
 
 export default class TimePlot extends Component{
 
-	// Construction: 
 	constructor(props){
 		super(props); 
-		this.state={layout:baseLineLayout}; 
+		this.state={layout:baseLineLayout,timePlotStyle:timePlotStyle,}; 
 		this.updateDimensions = this.updateDimensions.bind(this); 
-		this.renderPlot = this.renderPlot.bind(this); 
-
 	}
 
 	// Add a resize event listener: 
@@ -24,58 +30,65 @@ export default class TimePlot extends Component{
 
 	// Callback for resize event listener: 
 	updateDimensions() {
-    this.setState({width: window.innerWidth,height:window.innerHeight});
+		// Update the layout on resize: 
+	  var layout = this.state.layout; 
+		layout.width = window.innerWidth * 0.6 + 240; 
+		layout.datarevision += 1; 
+		var tps = Object.assign({},this.state.timePlotStyle); 
+		tps.width = window.innerWidth * 0.6 + 240; 
+    this.setState({width: window.innerWidth,height:window.innerHeight,layout:layout,timePlotStyle:tps});
   }; 
 
+  // Updating state in response to new data received via newProps. These state changes then refresh the plot.  
   componentDidUpdate(prevProps,prevState){
+  	// We've got a new page to pull: 
   	if(prevProps && prevProps.pageid != this.props.pageid){
-  		// new page: 
-  		console.log('NEWPAGE')
   		var layout = baseLineLayout; 
   		this.setState({layout:layout}); 
   	}
+  	// We've received new data:
   	else if(prevProps && prevProps != this.props){
   		var layout = this.state.layout; 
   		layout.datarevision += 1; 
+  		// get the value;
+  		var maxVal   = Math.max(...this.props.lineData[0].y);
+  		var roundVal = maxVal <= 1 ? 1 : Math.floor(maxVal); 
+  		var midVal   = maxVal/2; 
+  		layout.yaxis.tickvals[0] = roundVal; 
+  		layout.yaxis.ticktext[0] = roundVal.toString();  
+  		layout.annotations[0].y  = midVal; 
   		this.setState({layout:layout}); 
   	}
   }
 
-  // Re-rendering plot on data update: (new data is the only thing that will update this.props)
+  // Updating the component in response to newProps/State. 
   shouldComponentUpdate(nextProps,nextState){
   	if(nextProps && nextProps.pageid != this.props.pageid){
   		return true; 
   	}
-		if(nextProps && nextProps!= this.props){
+		else if(nextProps && nextProps!= this.props){
 			return true; 
 		}
 		else if(nextState && nextState != this.state){
 			return true; 
 		}
 		else{
-			return false; 
+			return true; 
 		}
   }
 
-  renderPlot(){
-  	console.log('rendering plot')
-  	return(
-			<Plot
-	      data   = {this.props.lineData}
-	      config = {{displayModeBar: false}}
-	      layout = {this.state.layout}
-	      style  = {timePlotStyle}
-	     	onInitialized    = {(fig) => {this.setState({fig})} }
-	      onRelayout       = {(figure) => {this.setState(figure)}}
-	      resizeHandler = {false}
-	    />	
-  	)
-  }
-	// Render: 
 	render(){
 		return(
 			<div style = {timePlotContainer}>
-				{this.renderPlot()}
+				<Plot
+		      data             = {this.props.lineData}
+		      config           = {{displayModeBar: false}}
+		      layout           = {this.state.layout}
+		      style            = {this.state.timePlotStyle}
+		     	onInitialized    = {(figure) => {this.setState(figure)}}
+		      onRelayout       = {(figure) => {this.setState(figure)}}
+		      resizeHandler    = {false}
+		    />	
       </div>
 		)
 	}

@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
-import {mapDivStyle,statRowStyle,timePlotContainer} from './styles'; 
-import {baseMapLayout,baseLineLayout,baseLineData} from './plotStuff';
+import {statRowStyle} from './styles'; 
+import {baseMapLayout,baseLineLayout,baseLineData,} from './plotStuff';
 import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
 import GetRevs from './helperFunctions/GetRevs'; 
 import GetLocation from './helperFunctions/GetLocation'; 
@@ -25,28 +25,23 @@ import TimePlot from './TimePlot';
 
 */
 
-const emptyLines = [
-		  {
-		    x:[], 
-		    y:[], 
-		    type: 'scatter',
-		    mode: 'lines',
-		    marker:{color:'lightgray'}, 
-		    hoverinfo: 'none',
-		    fillcolor:'darkgray',
-		    fill:'tozeroy', 
-		  }, 
-		  {
-		    x:[], 
-		    y:[], 
-		    type: 'scatter',
-		    mode: 'lines',
-		    marker:{color:'white'}, 
-		    hoverinfo: 'none',
-		    fillcolor:'lightgray', 
-		    fill:'tozeroy', 
-		  }, 
-]; 
+var mapDivStyle = {
+	width: "100%",
+	display:'flex', 
+	flexDirection:'column',
+	justifyContent:'flex-start', 
+	alignItems:'center', 
+	height:window.innerHeight-60,
+}; 
+
+var mapPlotContainer = {
+	width:"100%",
+	display:'flex',
+	flexDirection:'row',
+	justifyContent:'center', 
+	alignItems:'flex-start',
+	height:window.innerHeight-250, 
+}; 
 
 class MapDiv extends Component{
 
@@ -64,8 +59,12 @@ class MapDiv extends Component{
 		    mode: 'lines',
 		    marker:{color:'lightgray'}, 
 		    hoverinfo: 'none',
-		    fillcolor:'darkgray',
+		    fillcolor:'rgba(128,128,128,0.8)',
 		    fill:'tozeroy', 
+				line: {
+		      color:'white',
+		      width: 1,
+		    }
 		  }, 
 		  {
 		    x:[], 
@@ -107,6 +106,9 @@ class MapDiv extends Component{
 	    tstep:null, 
 	    lineData:lData,
 	    currentSize:'', 
+	    uniqueEditors:0, 
+	    mapDivStyle:mapDivStyle, 
+	    mapPlotContainer:mapPlotContainer, 
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -135,11 +137,26 @@ class MapDiv extends Component{
 		this.renderControlBar    = this.renderControlBar.bind(this); 
 		this.renderStatRow       = this.renderStatRow.bind(this); 
 		this.getLineFrames       = this.getLineFrames.bind(this); 
+		this.removeDuplicates    = this.removeDuplicates.bind(this); 
 	}
 
   // To handle browser resize; 
   updateDimensions() {
-    this.setState({width: window.innerWidth,height:window.innerHeight});
+  	var divStyle         = Object.assign({},this.state.mapDivStyle); 
+  	var plotStyle        = Object.assign({},this.state.mapPlotContainer); 
+  	var mapLayout        = Object.assign({},this.state.layout); 
+  	divStyle.height      = window.innerHeight-60; 
+  	var heightCheck = window.innerHeight < 400 ? 400 : window.innerHeight; 
+  	plotStyle.height     = heightCheck-260; 
+  	mapLayout.height     = heightCheck-260; 
+  	mapLayout.datarevision = mapLayout.datarevision + 1; 
+    this.setState({
+    	width: window.innerWidth,
+    	height:window.innerHeight,
+    	mapDivStyle:divStyle,
+    	mapPlotContainer:plotStyle, 
+    	layout:mapLayout,
+    });
   }; 
 
   // Attached UpdateDimensions to our window: 
@@ -150,7 +167,6 @@ class MapDiv extends Component{
 
   // componentDidUpdate is used to fetch and/or clear data for wiki_revs: 
 	async componentDidUpdate(prevProps,prevState){
-		console.log('refreshing')
 		// This ie executed when the user initial comes into the app.  
 		if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
 			// This call pulls the first rev batch: 
@@ -159,7 +175,6 @@ class MapDiv extends Component{
 
 		// Do we need to clear existing data, users has requested a new page: 
 		else if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
-			console.log('clearing')
 			var DD = new Date(); 
 			var emptyLineData = [
 		  {
@@ -169,8 +184,12 @@ class MapDiv extends Component{
 		    mode: 'lines',
 		    marker:{color:'lightgray'}, 
 		    hoverinfo: 'none',
-		    fillcolor:'darkgray',
-		    fill:'tozeroy', 
+		    fillcolor:'rgba(128,128,128,0.8)',
+		    fill:'tozeroy',
+		    line: {
+		      color:'white',
+		      width: 1,
+		    } 
 		  }, 
 		  {
 		    x:[], 
@@ -208,6 +227,7 @@ class MapDiv extends Component{
 				revArray:[], 
 				cont:null, 
 				currentSize:'',
+				uniqueEditors:0, 
 			});  
 		}
 
@@ -251,70 +271,57 @@ class MapDiv extends Component{
 
 	// Update when we receive new data: 
 	shouldComponentUpdate(nextProps,nextState){
-
 		// This tells us to being pulling the data: 
-		if(nextProps && nextProps.pageid != this.props.pageid){
+		if(nextProps && nextProps != this.props){
 			return true; 
 		}
-
 		// Perhaps we have to clear things! 
 		else if(this.state.cleared != nextState.cleared){
 			return true; 
 		}
-
 		// This tell us to framfiy the data: 
 		else if(nextState && nextState.revPullComplete == true){
 			return true; 
 		}
-
 		// We have more revs: 
 		else if(nextState && nextState.revArray != this.state.revArray){
 			return true; 
 		}
-
 		// Tells us we have new frames and are ready to display accordingly: 
-		else if(nextState && this.state.frameData.length && this.state.frameData.length != nextState.frameData.length){
+		else if(nextState && this.state.frameData.length != nextState.frameData.length){
 			return true; 
 		}
-
 		else if(nextState && nextState.lineData != this.state.lineData){
 			return true; 
 		}
-
 		// We have a continue to fetch: 
 		else if(nextState && this.state.cont != nextState.cont){
 			return true; 
 		}
-
 		// Are we fetching data?
 		else if(nextState && nextState.fetching != this.state.fetching){
 			return true;
 		}
-
 		// Has the window been resized? (horizontally)
 		else if(nextState && nextState.width != this.state.width){
 			return true; 
 		}
-
 		// Has the window been resized? (vertically)
 		else if(nextState && nextState.height != this.state.height){
 			return true; 
 		}
-
 		// Has the slider moved?
 		else if(nextState && nextState.sliderPosition != this.state.sliderPosition){
 			return true; 
 		}
-
 		// If all else fails, we don't update the thing: 
 		else{
 			return false; 
 		}
-
 	}
 
 	async RevPuller(){
-		// Here we grab revs in batches of 500 or less. 
+		// Here we grab revs in batches of 500 (or less). 
 		try{
 
 			// Grab some new revData:
@@ -326,10 +333,9 @@ class MapDiv extends Component{
 			var bday       = bdayObj.getTime(); 
 			var articleAge = this.state.now - bday; 
 			// Update rev count: 
-			var revCount   = this.state.revCount; 
-			revCount      += revData.revsPulled; 
+			var revCount   = this.state.revCount + revData.revsPulled; 
 
-			// Update state with article age and/or bday: 
+			// This if-statement is only executed when instantiating a page (e.g. the user selected a new page). 
 			if(this.state.bday == null && this.state.articleAge == null){
 				// Take this opportunity to make time vectors and labels: 
 				var lineEnds = [], mapEnds = []; 
@@ -346,18 +352,29 @@ class MapDiv extends Component{
 				var labels  = this.state.labels; 
 				labels[0]   = bdayStr; 
 				// Update the state: 
-				this.setState({bday:bday,articleAge:articleAge,cleared:false,lineEnds:lineEnds,mapEnds:mapEnds,labels:labels,fetching:true}); 
+				this.setState({
+					bday:bday,
+					articleAge:articleAge,
+					cleared:false,
+					lineEnds:lineEnds,
+					mapEnds:mapEnds,
+					labels:labels,
+					fetching:true
+				}); 
 			}
 			
-
-			// What is the most recent timestamp in our revData.revs array?
+			// Updating 
 			var lastTime = new Date(revData.revs[revData.revs.length-1].timestamp); 
+
 			// Putting it in ms form.
 			lastTime = lastTime.getTime(); 
+
 			// And seeing how many frames we can construct according to lastTime. 
 			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
-			// Clean up the revs // 
+
+			// Concatenating revs: 
 			var accRevs   = this.state.revArray.concat(revData.revs); 
+
 			// Getting the size: 
 			var currentSize = accRevs[accRevs.length-1].size/1000; 
 			currentSize = currentSize.toString(); 
@@ -368,6 +385,10 @@ class MapDiv extends Component{
 				currentSize = currentSize.slice(0,4); 
 			}
 			currentSize = currentSize + 'kB'; 
+
+			// Getting number of contributors: 
+			var uniqueEditors = accRevs.map(x => x.user).filter(this.removeDuplicates).length; 
+			console.log(uniqueEditors); 
 			// Want 4 digits or less. 
       revData.revs  = FilterRevs(revData.revs); 
       revData.revs  =  RemoveDuplicateIps(revData.revs); 
@@ -399,13 +420,12 @@ class MapDiv extends Component{
 			  		y:0.99,
 			  		showarrow:false,
 			  		bgcolor:'black',
-			  		visible:true,
+			  		visible:false,
 			  	}
   			]; 
   			var layout = this.state.layout; 
   			layout.annotations = annotations; 
   			var complete = cont == null ? true:false; 
-  			console.log(complete);
 				this.setState({
 					revCount:revCount,
 					revArray:accRevs,
@@ -417,6 +437,7 @@ class MapDiv extends Component{
 					layout:layout, 
 					revPullComplete:complete,
 					currentSize:currentSize,
+					uniqueEditors:uniqueEditors, 
 				});			
 			}
 			else{
@@ -424,7 +445,8 @@ class MapDiv extends Component{
 					revCount:revCount,
 					revArray:accRevs,
 					cont:cont,
-					currentSize:currentFrame, 
+					currentSize:currentSize, 
+					uniqueEditors:uniqueEditors, 
 				});		
 			}
 		}
@@ -433,6 +455,11 @@ class MapDiv extends Component{
 		}
 	}
 
+  removeDuplicates( item, index, inputArray ){
+    if(item != undefined){
+      return inputArray.indexOf(item) == index;
+    }
+  } 
 
 	// A function to determine how many frames we can assemble with the most recently pulled rev batch: 
 	getNumberOfFrames(lastTime){
@@ -452,7 +479,8 @@ class MapDiv extends Component{
 		var lineData = this.state.lineData; 
 		var startI = this.state.lineData[0].x.length; 
 		var maxI = framesToMake + this.state.lineData[0].x.length; 
-		console.log(framesToMake,maxI,startI);
+		// How many weeks are ina frame?
+		var frameWeek = (this.state.lineEnds[1]-this.state.lineEnds[0])/6.048e8; 
 		// Iterate and add more data entries to this thing: 
 		for(let i = startI; i < maxI; i++){
 			var startTime = i == 0 ? this.state.articleAge : this.state.lineEnds[i-1]; 
@@ -469,9 +497,12 @@ class MapDiv extends Component{
 					}
 				}
 			); 
+			// We are going to use revs/week as our unit: 
+			var revsPerWeek = filteredRevs.length/frameWeek; 
+			console.log(revsPerWeek);
 			// Coolness, lets add this data to our array as x-y pairs!
 			lineData[0].x.push(i); 
-			lineData[0].y.push(filteredRevs.length); 
+			lineData[0].y.push(revsPerWeek); 
 		}
 		console.log('in frame grab', lineData[0]); 
 		// Okay, we've finished interating, lets update the state; 
@@ -587,7 +618,7 @@ class MapDiv extends Component{
 
 	// A function to loop sounds; the number of iterations determined by the number of revs in each frame. 
 	loopSounds(index){ 
-		console.log(index,this.state.frameData.length)
+		console.log(this.state.frameData[index][0])
 		var numEdits = this.state.frameData[index][0].lat.length; 
 		if(index > 0){
 			numEdits = numEdits - this.state.frameData[index-1][0].lat.length; 
@@ -637,8 +668,11 @@ class MapDiv extends Component{
 					// var lineData     = this.state.lineData[lineFrame]; 
 					// Play thte sounds: 
 					this.loopSounds(currentFrame); 
+					// update the layout: 
+					var layout = this.state.layout; 
+					layout.datarevision += 1; 
 					// update the data: 
-					this.setState({data:data,currentFrame:currentFrame,tstep:tstep,sliderPosition:tstep}); 
+					this.setState({data:data,currentFrame:currentFrame,tstep:tstep,sliderPosition:tstep,layout:layout,}); 
 				}
 				else if(tstep % 5 == 0){
 					var lineFrame    = Math.round(tstep/5); 
@@ -709,14 +743,14 @@ class MapDiv extends Component{
 		if(this.state.frameData.length > 0){
 			return(
 				<div style ={statRowStyle}>
-					<div style ={{width:window.innerWidth/3,height:30,alignItems:'center',justifyContent:'center',display:'flex',flexDirection:'row',fontSize:12}}>
-						{this.state.currentSize}
+					<div style = {{width:window.innerWidth/3,height:36,alignItems:'center',justifyContent:'center',display:'flex',fontSize:16,textAlign:'center',whiteSpace:'pre-line'}}>
+						contributors{'\n'}{this.state.uniqueEditors}
 					</div>
-					<div style ={{width:window.innerWidth/3,height:30,alignItems:'center',justifyContent:'center',display:'flex',fontSize:12}}>
-						{this.state.revArray.length}{' '}EDITS
+					<div style ={{width:window.innerWidth/3,height:36,alignItems:'center',justifyContent:'center',display:'flex',fontSize:16,textAlign:'center',whiteSpace:'pre-line'}}>
+						edits{'\n'}{this.state.revArray.length}
 					</div>
-					<div style = {{width:window.innerWidth/3,height:30,alignItems:'center',justifyContent:'center',display:'flex',fontSize:12}}>
-						CONTRIBUTORS
+					<div style ={{width:window.innerWidth/3,height:36,alignItems:'center',justifyContent:'center',display:'flex',fontSize:16,textAlign:'center',whiteSpace:'pre-line'}}>
+						size{'\n'}{this.state.currentSize}
 					</div>
 				</div>
 			); 
@@ -737,7 +771,7 @@ class MapDiv extends Component{
 	      	onSliderChange = {this.sliderChangeHandler}
 	      	sliderVal      = {this.state.sliderPosition}
 	      	playing        = {this.state.anim}
-	      	style          = {{width:window.innerWidth,height:100}}
+	      	style          = {{width:"100%",zIndex:99}}
 	      	labels         = {this.state.labels}
 	      />
 			)
@@ -753,22 +787,24 @@ class MapDiv extends Component{
 		var layout = this.state.layout; 
 		var frames = this.state.frameData; 
 		var data = this.state.data; 
+
+
 		if(this.state.fetching == true){
 			return(
-				<div style = {mapDivStyle}>
+				<div style = {this.state.mapDivStyle}>
 					<LoadingComponent/>
 				</div>
 			)
 		}
-		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.frameData.length == 0){
+		else if(this.state.fetching == false && this.state.data != null && this.state.layout != null && this.state.frameData && this.state.frameData.length == 0){
 			return(
-				<div style = {mapDivStyle}>
-					<div style = {timePlotContainer}>
+				<div style = {this.state.mapDivStyle}>
+					<div style = {this.state.mapPlotContainer}>
 			      <Plot
 			        data={this.state.data}
 			        layout           = {this.state.layout}
 			        config           = {{displayModeBar: false}}
-			        style            = {{width:"100%", height:window.innerHeight-260}}
+			        style            = {{width:"100%", height:this.state.mapPlotContainer.height}}
 		          onInitialized    = {(figure) => this.setState(figure)}
 		          onRelayout       = {(figure) => {this.setState(figure)}}
 			      />
@@ -776,20 +812,21 @@ class MapDiv extends Component{
 		    </div>
 			)
 		}
-		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.height >= 400){
+		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData  && this.state.height >= 400 ){
 			return(
-				<div style = {mapDivStyle}>
-					<div style = {timePlotContainer}>
+				<div style = {this.state.mapDivStyle}>
+					{this.renderStatRow()}
+					<div style = {this.state.mapPlotContainer}>
 			      <Plot
 			        data={this.state.data}
 			        layout           = {this.state.layout}
 			        config           = {{displayModeBar: false}}
-			        style            = {{width:"100%", height:window.innerHeight-260}}
+			        style            = {{width:"100%", height:this.state.mapPlotContainer.height}}
 		          onInitialized    = {(figure) => this.setState(figure)}
 		          onRelayout       = {(figure) => {this.setState(figure)}}
 			      />
 		      </div>
-		      {this.renderStatRow()}
+		      
 		      <TimePlot lineData={this.state.lineData} pageid = {this.props.pageid}/>
 		      {this.renderControlBar()}
 		    </div>
@@ -798,22 +835,23 @@ class MapDiv extends Component{
 		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.height < 400){
 			return(
 				<div style = {mapDivStyle}>
-					<div style = {timePlotContainer}>
+					<div style = {mapPlotContainer}>
 			      <Plot
 			        data={this.state.data}
 			        layout           = {this.state.layout}
 			        config           = {{displayModeBar: false}}
-			        style            = {{width:"100%", height:window.innerHeight-260}}
+			        style            = {{width:"100%", height:"100%"}}
 		          onInitialized    = {(figure) => this.setState(figure)}
 		          onRelayout       = {(figure) => {this.setState(figure)}}
 			      />
 		      </div>
+		      {this.renderControlBar()}
 		    </div>
 	    )			
 		}
 		else{
 			return(
-				<div style = {mapDivStyle}>
+				<div style = {this.state.mapDivStyle}>
 					<LoadingComponent/>
 				</div>
 			)

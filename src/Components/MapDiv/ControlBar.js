@@ -5,12 +5,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ReactTimeout from 'react-timeout'; 
 import {
 	controlBarStyle, 
-	sliderBarStyle, 
-	buttonDivStyle, 
+	rightButtonDivStyle, 
+	leftButtonDivStyle, 
 	playButtonStyle, 
 	pauseButtonStyle, 
 	soundButtonStyle, 
 } from './styles';
+
+var sliderBarStyle = {
+	width:window.innerWidth*0.6,  
+	height:70,
+	alignItems:'center', 
+	justifyContent:'center', 
+	paddingTop:22,
+}; 
 
 // Place into a container class for use by Parent Component: 
 export default class ControlBar extends Component{
@@ -24,6 +32,7 @@ export default class ControlBar extends Component{
     	muted:false,
     	width:window.innerWidth,
     	height:window.innerHeight, 
+    	sliderBarStyle:sliderBarStyle, 
 		}; 
 
 		this.onPause = this.onPause.bind(this); 
@@ -38,7 +47,9 @@ export default class ControlBar extends Component{
   }
 	// To handle browser resize: 
   updateDimensions() {
-    this.setState({width: window.innerWidth,height:window.innerHeight});
+  	var slab = Object.assign({},this.state.sliderBarStyle); 
+  	slab.width = window.innerWidth * 0.6; 
+    this.setState({width: window.innerWidth,height:window.innerHeight,sliderBarStyle:slab});
   }; 
 
   // Lifecycle methods to keep things zippy.
@@ -102,7 +113,7 @@ export default class ControlBar extends Component{
 		// Package it all into a div and sent it on its way... 
 		return(
 			<div style = {controlBarStyle}>
-				<div style = {buttonDivStyle}>
+				<div style = {leftButtonDivStyle}>
 					<FontAwesomeIcon
 						icon="pause-circle"
 						onClick ={this.onPause}
@@ -114,17 +125,17 @@ export default class ControlBar extends Component{
 						style = {playButtonStyle}
 					/>
 				</div>
-				<div style = {sliderBarStyle}>
+				<div style = {this.state.sliderBarStyle}>
 					<Slider 
 						min      = {0}
 						max      = {594}
 						value    = {this.props.sliderVal}
 						onChange = {this.props.onSliderChange}
 						labels   = {this.props.labels}
-						tooltip={true}
+						tooltip={false}
 					/>
 				</div>
-				<div style = {buttonDivStyle}>
+				<div style = {rightButtonDivStyle}>
 					<FontAwesomeIcon
 						icon="undo"
 						onClick ={this.onMute}

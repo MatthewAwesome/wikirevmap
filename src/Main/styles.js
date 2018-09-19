@@ -10,11 +10,11 @@ const mainStyle = {
 	padding:0,
 	fontFamily:'courier-new',
 	paddingLeft:0, 
-	paddingBottom:10,
+	paddingBottom:0,
 	display:'flex', 
 	flexDirection:'column', 
 	alignItems:'flex-start', 
-	justifyContent:'flex-start', 
+	justifyContent:'flex-end', 
 }; 
 
 export {  

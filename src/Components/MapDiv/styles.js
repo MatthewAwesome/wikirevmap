@@ -1,26 +1,6 @@
 // Styles for the MapDiv: 
 import {alphaGray2,alphaGray5} from '../../Extras/grays'; 
 
-// const mapDivStyle = {
-// 	width: "100%",
-// 	height: window.innerHeight-40,
-// 	position:'absolute',
-// 	display:'flex',
-// 	flexDirection:'column',
-// 	top:60,
-// 	left:0,
-// 	alignItems:'center', 
-// 	justifyContent:'space-around'
-// }; 
-
-const mapDivStyle = {
-	width: "100%",
-	display:'flex', 
-	flexDirection:'column',
-	justifyContent:'flex-start', 
-	alignItems:'center', 
-	height:window.innerHeight-60,
-}; 
 
 const loadingStyle = {
 	height:"100%", 
@@ -46,47 +26,51 @@ var controlBarStyle = {
 	flexDirection:'row', 
 	justifyContent: 'center', 
 	alignItems:'center', 
-	paddingBottom:10,
+	height:80,
+	paddingTop:10,
 }; 
 
-const sliderBarStyle = {
-	width:"60%",  
-	height:50,
-	alignItems:'center', 
-	justifyContent:'center', 
-	paddingBottom:20, 
-	paddingLeft:5, 
-	paddingRight:5,
-}; 
-
-const buttonDivStyle = {
+const rightButtonDivStyle = {
 	height:70, 
 	width:"20%", 
 	display:'flex', 
 	flexDirection:'row', 
-	justifyContent:'space-around', 
+	justifyContent:'flex-start', 
 	alignItems:'center', 
-	paddingBottom:20,
-	paddingRight:3, 
-	paddingLeft:3,
+	paddingLeft:0,
+	zIndex:1,
+}; 
+
+const leftButtonDivStyle = {
+	height:70, 
+	width:"20%", 
+	display:'flex', 
+	flexDirection:'row', 
+	justifyContent:'flex-end', 
+	alignItems:'center', 
+	paddingRight:0,
+	zIndex:1,
 }; 
 
 const playButtonStyle = {
-	height:"32px",
-	width:"32px",
-	borderRadius:"32px"
+	height:"28px",
+	width:"28px",
+	borderRadius:"28px", 
+	padding:10,
 }; 
 
 const pauseButtonStyle = {
-	height:"32px",
-	width:"32px",
-	borderRadius:"32px"
+	height:"28px",
+	width:"28px",
+	borderRadius:"28px", 
+	padding:10,
 }; 
 
 const soundButtonStyle = {
-	height:"32px",
-	width:"32px",
-	borderRadius:"32px"
+	height:"28px",
+	width:"28px",
+	borderRadius:"28px",
+	padding:10,
 }; 
 
 const statRowStyle = {
@@ -99,13 +83,11 @@ const statRowStyle = {
 	fontSize:14, 
 	fontWeight:300, 
 	color:'white', 
-}
-
-const dataFlexStyle = {
-	display:'flex', 
-	flexDirection:'column', 
-	height:window.innerHeight-60, 
-	width:"100%", 
+	zIndex:1,
+	paddingBottom:2,
+	borderBottomWidth:2, 
+	borderBottomColor:alphaGray5,
+	height:40,
 }
 
 const timePlotContainer = {
@@ -114,26 +96,28 @@ const timePlotContainer = {
 	flexDirection:'row',
 	justifyContent:'center', 
 	alignItems:'flex-start',
+	height:80,
+	paddingTop:5,
 }
 
 const timePlotStyle = {
 	width:"60%",
 	height:80,
 	overflow:'hidden',
-	align:'center', 
+	align:'center',
+	paddingLeft:0, 
+	paddingRight:0, 
 }
 
-export {
-	mapDivStyle, 
+export { 
 	loadingStyle,
 	loadingTextStyle, 
 	controlBarStyle, 
-	sliderBarStyle, 
-	buttonDivStyle, 
-	playButtonStyle, 
+	rightButtonDivStyle, 
+	leftButtonDivStyle
+,	playButtonStyle, 
 	pauseButtonStyle, 
 	soundButtonStyle, 
 	statRowStyle, 
 	timePlotContainer, 
-	timePlotStyle, 
 }
