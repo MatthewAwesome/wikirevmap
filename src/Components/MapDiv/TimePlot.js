@@ -7,7 +7,7 @@ import {timePlotContainer} from './styles';
 import {baseLineLayout} from './plotStuff';
 
 var timePlotStyle = {
-	width:window.innerWidth*0.6+240,
+	width:window.innerWidth*0.6+200,
 	height:80,
 	overflow:'hidden',
 	align:'center',
@@ -32,10 +32,10 @@ export default class TimePlot extends Component{
 	updateDimensions() {
 		// Update the layout on resize: 
 	  var layout = this.state.layout; 
-		layout.width = window.innerWidth * 0.6 + 240; 
+		layout.width = window.innerWidth * 0.6 + 200; 
 		layout.datarevision += 1; 
 		var tps = Object.assign({},this.state.timePlotStyle); 
-		tps.width = window.innerWidth * 0.6 + 240; 
+		tps.width = window.innerWidth * 0.6 + 200; 
     this.setState({width: window.innerWidth,height:window.innerHeight,layout:layout,timePlotStyle:tps});
   }; 
 
@@ -55,7 +55,7 @@ export default class TimePlot extends Component{
   		var roundVal = maxVal <= 1 ? 1 : Math.floor(maxVal); 
   		var midVal   = maxVal/2; 
   		layout.yaxis.tickvals[0] = roundVal; 
-  		layout.yaxis.ticktext[0] = roundVal.toString();  
+  		layout.yaxis.ticktext[0] = "<b>" + roundVal.toString() + "</b>"
   		layout.annotations[0].y  = midVal; 
   		this.setState({layout:layout}); 
   	}

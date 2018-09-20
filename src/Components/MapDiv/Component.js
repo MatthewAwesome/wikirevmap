@@ -40,8 +40,46 @@ var mapPlotContainer = {
 	flexDirection:'row',
 	justifyContent:'center', 
 	alignItems:'flex-start',
-	height:window.innerHeight-250, 
+	height:window.innerHeight-212, 
 }; 
+
+var statItemStyle = {
+	width:"33.3%",
+	height:36,
+	alignItems:'center',
+	justifyContent:'center',
+	display:'flex',
+	fontSize:16,
+	textAlign:'center',
+	whiteSpace:'pre-line'
+}; 
+
+var emptyLineData = [
+  {
+    x:[], 
+    y:[], 
+    type: 'scatter',
+    mode: 'lines',
+    marker:{color:'white'}, 
+    hoverinfo: 'none',
+    fillcolor:'rgba(128,128,128,0.8)',
+    fill:'tozeroy',
+    line: {
+      color:'white',
+      width: 1,
+    } 
+  }, 
+  {
+    x:[], 
+    y:[], 
+    type: 'scatter',
+    mode: 'lines',
+    marker:{color:'white'}, 
+    hoverinfo: 'none',
+    fillcolor:'lightgray', 
+    fill:'tozeroy', 
+  }, 
+]; 
 
 class MapDiv extends Component{
 
@@ -50,33 +88,7 @@ class MapDiv extends Component{
 		// super-size, anyone? 
 		super(props); 
 		// Some variables for potential use: 
-    var D = new Date(); 
-    var lData = [
-		  {
-		    x:[], 
-		    y:[], 
-		    type: 'scatter',
-		    mode: 'lines',
-		    marker:{color:'lightgray'}, 
-		    hoverinfo: 'none',
-		    fillcolor:'rgba(128,128,128,0.8)',
-		    fill:'tozeroy', 
-				line: {
-		      color:'white',
-		      width: 1,
-		    }
-		  }, 
-		  {
-		    x:[], 
-		    y:[], 
-		    type: 'scatter',
-		    mode: 'lines',
-		    marker:{color:'white'}, 
-		    hoverinfo: 'none',
-		    fillcolor:'lightgray', 
-		    fill:'tozeroy', 
-		  }, 
-		]; 
+    var D = new Date();  
     // Initialize the state container: 
     this.state = { data: [{type: 'scattergeo'}], 
 	    layout: baseMapLayout,
@@ -85,7 +97,6 @@ class MapDiv extends Component{
 	    now:D.getTime(),
 	    revPullComplete:false,
 	    bday:null, 
-	    revCount:0, 
 	    maxTimes:1,
 	    fetching:false, 
 	    baseMapLayout:baseMapLayout, 
@@ -96,7 +107,6 @@ class MapDiv extends Component{
 	    currentFrame:0, 
 	    sliderPosition:0,
 	    muted:false, 
-	    buffering:false, 
 	    revArray:[], 
 	    cont:null, 
 	    articleAge:null, 
@@ -104,11 +114,12 @@ class MapDiv extends Component{
 	    lineEnds:null,
 	    labels:{}, 
 	    tstep:null, 
-	    lineData:lData,
+	    lineData:baseLineData,
 	    currentSize:'', 
 	    uniqueEditors:0, 
 	    mapDivStyle:mapDivStyle, 
 	    mapPlotContainer:mapPlotContainer, 
+	    statItemStyle:statItemStyle, 
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -138,18 +149,22 @@ class MapDiv extends Component{
 		this.renderStatRow       = this.renderStatRow.bind(this); 
 		this.getLineFrames       = this.getLineFrames.bind(this); 
 		this.removeDuplicates    = this.removeDuplicates.bind(this); 
+		this.mapScaler           = this.mapScaler.bind(this); 
 	}
 
   // To handle browser resize; 
   updateDimensions() {
-  	var divStyle         = Object.assign({},this.state.mapDivStyle); 
-  	var plotStyle        = Object.assign({},this.state.mapPlotContainer); 
-  	var mapLayout        = Object.assign({},this.state.layout); 
-  	divStyle.height      = window.innerHeight-60; 
-  	var heightCheck = window.innerHeight < 400 ? 400 : window.innerHeight; 
-  	plotStyle.height     = heightCheck-260; 
-  	mapLayout.height     = heightCheck-260; 
+  	// Do things with the current window size: 
+  	var divStyle           = Object.assign({},this.state.mapDivStyle); 
+  	var plotStyle          = Object.assign({},this.state.mapPlotContainer); 
+  	var mapLayout          = Object.assign({},this.state.layout); 
+  	var statStyle          = Object.assign({},this.state.statItemStyle); 
+  	var heightCheck        = window.innerHeight < 400 ? 400 : window.innerHeight; 
+  	divStyle.height        = window.innerHeight-60; 
+  	plotStyle.height       = heightCheck-212; 
+  	mapLayout.height       = heightCheck-212; 
   	mapLayout.datarevision = mapLayout.datarevision + 1; 
+  	// And update the state accordingly: 
     this.setState({
     	width: window.innerWidth,
     	height:window.innerHeight,
@@ -172,37 +187,11 @@ class MapDiv extends Component{
 			// This call pulls the first rev batch: 
 			await this.RevPuller();
 		}
-
 		// Do we need to clear existing data, users has requested a new page: 
 		else if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
 			var DD = new Date(); 
-			var emptyLineData = [
-		  {
-		    x:[], 
-		    y:[], 
-		    type: 'scatter',
-		    mode: 'lines',
-		    marker:{color:'lightgray'}, 
-		    hoverinfo: 'none',
-		    fillcolor:'rgba(128,128,128,0.8)',
-		    fill:'tozeroy',
-		    line: {
-		      color:'white',
-		      width: 1,
-		    } 
-		  }, 
-		  {
-		    x:[], 
-		    y:[], 
-		    type: 'scatter',
-		    mode: 'lines',
-		    marker:{color:'white'}, 
-		    hoverinfo: 'none',
-		    fillcolor:'lightgray', 
-		    fill:'tozeroy', 
-		  }, 
-		]; 
-		this.setState({
+			console.log('in update')
+			this.setState({
 				frameData:[],
 				data:this.state.baseData,
 				layout:this.state.baseMapLayout,
@@ -211,7 +200,6 @@ class MapDiv extends Component{
 				revPullComplete:false,
 				bday:null,
 				articleAge:null, 
-				revCount:0,
 				maxTimes:1,
 				fetching:false, 
 				cleared:true,
@@ -228,23 +216,18 @@ class MapDiv extends Component{
 				cont:null, 
 				currentSize:'',
 				uniqueEditors:0, 
-			});  
+			});
 		}
-
 		// Fetching after the clear: 
 		else if(prevState.cleared == false && this.state.cleared == true ){
-			console.log('pulling more revs')
 			await this.RevPuller(); 
 		}
-
 		// Fetching additional revs... 
 		else if(prevState.cont != this.state.cont && this.state.cont != null){
 			await this.RevPuller(); 
 		}
-
 		// Setting state signifying that we have pulled all the revs for a given page: 
 		else if(prevState.cont != null && this.state.cont == null){
-			console.log('no more continues')
 			// And we tack on end label: 
 			var labels   = this.state.labels; 
 			var tEnd     = new Date(this.state.mapEnds[59]); 
@@ -253,20 +236,17 @@ class MapDiv extends Component{
 			var tMid     = new Date(this.state.mapEnds[29]); 
 			labels[299] = tMid.toGMTString().slice(8,16); 
 			this.setState({revPullComplete:true,labels:labels})
-			console.log('complete\n',this.state.frameData.length)
 		}
+		// Sometimes all the revs get fetch in a single call, and therefore cont never goes to null; this is handled below. 
 		else if(prevState.revPullComplete == false && this.state.revPullComplete == true){
-			console.log('revPullComplete')
 			var labels   = this.state.labels; 
-			var tEnd     = new Date(this.state.mapEnds[59]); 
-			console.log(tEnd); 
+			var tEnd     = new Date(this.state.mapEnds[59]);
 			labels[599] = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
 			var tMid     = new Date(this.state.mapEnds[29]); 
 			labels[299] = tMid.toGMTString().slice(8,16); 
 			this.setState({labels:labels})
 		}
-
 	}
 
 	// Update when we receive new data: 
@@ -314,6 +294,9 @@ class MapDiv extends Component{
 		else if(nextState && nextState.sliderPosition != this.state.sliderPosition){
 			return true; 
 		}
+		else if(nextState && nextState.layout != this.state.layout){
+			return true; 
+		}
 		// If all else fails, we don't update the thing: 
 		else{
 			return false; 
@@ -323,17 +306,15 @@ class MapDiv extends Component{
 	async RevPuller(){
 		// Here we grab revs in batches of 500 (or less). 
 		try{
-
 			// Grab some new revData:
 			var revData    = await GetRevs(this.props.pageid,this.state.cont); 
-			// Pagemark our rev-grabbing spot with a continue: 
+			// Bookmark our rev-grabbing spot with a continue: 
 			var cont       = revData.cont == null ? null : revData.cont; 
-			// Determine the articles age: 
+			// Determine the articles birthday: 
 			var bdayObj    = new Date(revData.revs[0].timestamp); 
 			var bday       = bdayObj.getTime(); 
+			// And its age: 
 			var articleAge = this.state.now - bday; 
-			// Update rev count: 
-			var revCount   = this.state.revCount + revData.revsPulled; 
 
 			// This if-statement is only executed when instantiating a page (e.g. the user selected a new page). 
 			if(this.state.bday == null && this.state.articleAge == null){
@@ -363,21 +344,16 @@ class MapDiv extends Component{
 				}); 
 			}
 			
-			// Updating 
+			// Updating our last time: 
 			var lastTime = new Date(revData.revs[revData.revs.length-1].timestamp); 
-
-			// Putting it in ms form.
-			lastTime = lastTime.getTime(); 
-
+			lastTime     = lastTime.getTime(); 
 			// And seeing how many frames we can construct according to lastTime. 
 			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
-
-			// Concatenating revs: 
-			var accRevs   = this.state.revArray.concat(revData.revs); 
-
-			// Getting the size: 
-			var currentSize = accRevs[accRevs.length-1].size/1000; 
-			currentSize = currentSize.toString(); 
+			// Concatenating revs, and counding them: 
+			var accRevs      = this.state.revArray.concat(revData.revs); 
+			var currentSize  = accRevs[accRevs.length-1].size/1000; 
+			// Representing the size as a string: 
+			currentSize      = currentSize.toString(); 
 			if(currentSize.indexOf('.') != -1 && currentSize.indexOf('.') >= 4 ){
 				currentSize = currentSize.slice(0,currentSize.indexOf('.')); 
 			}
@@ -388,10 +364,10 @@ class MapDiv extends Component{
 
 			// Getting number of contributors: 
 			var uniqueEditors = accRevs.map(x => x.user).filter(this.removeDuplicates).length; 
-			console.log(uniqueEditors); 
-			// Want 4 digits or less. 
+			
+			// Cleaning the revs for mapping: 
       revData.revs  = FilterRevs(revData.revs); 
-      revData.revs  =  RemoveDuplicateIps(revData.revs); 
+      revData.revs  = RemoveDuplicateIps(revData.revs); 
       revData.revs  = await CheckAndAppend(revData.revs,this.state.revArray);  
 			
       // Make desired number of line frames: 	
@@ -427,7 +403,6 @@ class MapDiv extends Component{
   			layout.annotations = annotations; 
   			var complete = cont == null ? true:false; 
 				this.setState({
-					revCount:revCount,
 					revArray:accRevs,
 					frameData:frames.frameData,
 					maxTimes:frames.maxTimes, 
@@ -442,7 +417,6 @@ class MapDiv extends Component{
 			}
 			else{
 				this.setState({
-					revCount:revCount,
 					revArray:accRevs,
 					cont:cont,
 					currentSize:currentSize, 
@@ -475,13 +449,12 @@ class MapDiv extends Component{
 
 	// Assembling data for our line chart: 
 	getLineFrames(revs,framesToMake){
-		// Establish where we left off: 
-		var lineData = this.state.lineData; 
-		var startI = this.state.lineData[0].x.length; 
-		var maxI = framesToMake + this.state.lineData[0].x.length; 
-		// How many weeks are ina frame?
-		var frameWeek = (this.state.lineEnds[1]-this.state.lineEnds[0])/6.048e8; 
-		// Iterate and add more data entries to this thing: 
+		// Establish some vars to make frames: 
+		var lineData  = this.state.lineData; 
+		var startI    = this.state.lineData[0].x.length; 
+		var maxI      = framesToMake + this.state.lineData[0].x.length; 
+		var frameWeek = (this.state.lineEnds[1]-this.state.lineEnds[0])/6.048e8; // 6.048e8 milliseconds in a week!
+		// Iterate and add frames:  
 		for(let i = startI; i < maxI; i++){
 			var startTime = i == 0 ? this.state.articleAge : this.state.lineEnds[i-1]; 
 			var endTime   = this.state.lineEnds[i]; 
@@ -497,14 +470,10 @@ class MapDiv extends Component{
 					}
 				}
 			); 
-			// We are going to use revs/week as our unit: 
-			var revsPerWeek = filteredRevs.length/frameWeek; 
-			console.log(revsPerWeek);
 			// Coolness, lets add this data to our array as x-y pairs!
 			lineData[0].x.push(i); 
-			lineData[0].y.push(revsPerWeek); 
+			lineData[0].y.push(filteredRevs.length/frameWeek); 
 		}
-		console.log('in frame grab', lineData[0]); 
 		// Okay, we've finished interating, lets update the state; 
 		this.setState({lineData:lineData})
 	}
@@ -513,10 +482,8 @@ class MapDiv extends Component{
 	framifyData(revArray,framesToMake){
 		try{
 			// Getthe 'maxTimes'. This might be unnecessary... 
-			var times = revArray.map( (x) => {
-				return x.timesArray.length; 
-			})
-			var maxTimes = Math.max(...times);
+			var times     = revArray.map( (x) => {return x.timesArray.length}); 
+			var maxTimes  = Math.max(...times);
 			var newFrames = []; 
 			var oldFrames = this.state.frameData; 
 			// Filter data according to frame! 
@@ -554,7 +521,6 @@ class MapDiv extends Component{
 	}
 
 	getFrameData(data,maxTimes){
-
 		// data is an Array of frames. Update accordingly: 
 		var mappedData = data.map(
 			(x) => {
@@ -567,7 +533,7 @@ class MapDiv extends Component{
 		    var textArray       = []; 
 		    var markerColors    = []; 
 		    var markerOpacities = [];
-		    var scale           = 30; 
+		    var scale           = 35; 
 		    x.forEach(
 		    	(y,index) => {
 				    var markerSize = Math.log(y.timesArray.length * Math.E) * 3;  
@@ -618,7 +584,6 @@ class MapDiv extends Component{
 
 	// A function to loop sounds; the number of iterations determined by the number of revs in each frame. 
 	loopSounds(index){ 
-		console.log(this.state.frameData[index][0])
 		var numEdits = this.state.frameData[index][0].lat.length; 
 		if(index > 0){
 			numEdits = numEdits - this.state.frameData[index-1][0].lat.length; 
@@ -672,7 +637,13 @@ class MapDiv extends Component{
 					var layout = this.state.layout; 
 					layout.datarevision += 1; 
 					// update the data: 
-					this.setState({data:data,currentFrame:currentFrame,tstep:tstep,sliderPosition:tstep,layout:layout,}); 
+					this.setState({
+						data:data,
+						currentFrame:currentFrame,
+						tstep:tstep,
+						sliderPosition:tstep,
+						layout:layout,
+					}); 
 				}
 				else if(tstep % 5 == 0){
 					var lineFrame    = Math.round(tstep/5); 
@@ -719,7 +690,7 @@ class MapDiv extends Component{
 
 	async sliderChangeHandler(val){
 		// handling slider changes... 
-		this.onPause(); 
+		await this.onPause(); 
 		if(val != this.state.sliderPosition){
 			// The first condition satisifies when the user moves the slider when there are frames, 
 			// and an animation is not in progress: 
@@ -728,8 +699,11 @@ class MapDiv extends Component{
 				if(roundedVal >= this.state.frameData.length){
 					roundedVal = this.state.frameData.length-1; 
 				}
+				console.log(roundedVal); 
 				var data = this.state.frameData[roundedVal]; 
-				await this.setState({data:data,currentFrame:roundedVal,sliderPosition:val,anim:null,tstep:val}); 
+				var layout = Object.assign({},this.state.layout); 
+				layout.datarevision = layout.datarevision + 1; 
+				await this.setState({data:data,currentFrame:roundedVal,sliderPosition:val,anim:null,tstep:val,layout:layout,}); 
 				this.loopSounds(roundedVal); 
 			}
 			// What if the slider 
@@ -743,13 +717,13 @@ class MapDiv extends Component{
 		if(this.state.frameData.length > 0){
 			return(
 				<div style ={statRowStyle}>
-					<div style = {{width:window.innerWidth/3,height:36,alignItems:'center',justifyContent:'center',display:'flex',fontSize:16,textAlign:'center',whiteSpace:'pre-line'}}>
+					<div style = {statItemStyle}>
 						contributors{'\n'}{this.state.uniqueEditors}
 					</div>
-					<div style ={{width:window.innerWidth/3,height:36,alignItems:'center',justifyContent:'center',display:'flex',fontSize:16,textAlign:'center',whiteSpace:'pre-line'}}>
+					<div style ={statItemStyle}>
 						edits{'\n'}{this.state.revArray.length}
 					</div>
-					<div style ={{width:window.innerWidth/3,height:36,alignItems:'center',justifyContent:'center',display:'flex',fontSize:16,textAlign:'center',whiteSpace:'pre-line'}}>
+					<div style ={statItemStyle}>
 						size{'\n'}{this.state.currentSize}
 					</div>
 				</div>
@@ -779,14 +753,47 @@ class MapDiv extends Component{
 		else{
 			return(null); 
 		}
+	}///
+
+	async mapScaler(figure){
+		var layout = Object.assign({},this.state.layout); 
+		var update = false; 
+		if(figure["geo.center.lat"] != null){
+			var centerLat = figure["geo.center.lat"];
+			if(centerLat > 60){
+				layout.geo.center.lat = 60; 
+				update = true; 
+			}
+			else if(centerLat < -40){
+				layout.geo.center.lat = -40; 
+				update = true; 
+			}
+		}
+		if(figure["geo.center.lon"] != null){
+			var centerLon = figure["geo.center.lon"];
+		}
+		if(figure["geo.projection.rotation.lon"] != null){
+			var rotationLon = figure["geo.projection.rotation.lon"]; 
+		}
+		if(figure["geo.projection.scale"]){
+			var scale = figure["geo.projection.scale"]; 
+			if(scale < 1){
+				update = true; 
+				layout.geo.projection.scale = 1; 
+			}
+		}
+		if(update === true){
+			layout.datarevision = layout.datarevision + 1; 
+			await this.setState({layout:layout}); 
+		}
 	}
 
-	// Define a render function for our class: 
+	/// Define a render function for our class: 
 	render(){
 
 		var layout = this.state.layout; 
 		var frames = this.state.frameData; 
-		var data = this.state.data; 
+		var data   = this.state.data; 
 
 
 		if(this.state.fetching == true){
@@ -806,7 +813,7 @@ class MapDiv extends Component{
 			        config           = {{displayModeBar: false}}
 			        style            = {{width:"100%", height:this.state.mapPlotContainer.height}}
 		          onInitialized    = {(figure) => this.setState(figure)}
-		          onRelayout       = {(figure) => {this.setState(figure)}}
+		          onRelayout       = {this.mapScaler}
 			      />
 		      </div>
 		    </div>
@@ -823,7 +830,7 @@ class MapDiv extends Component{
 			        config           = {{displayModeBar: false}}
 			        style            = {{width:"100%", height:this.state.mapPlotContainer.height}}
 		          onInitialized    = {(figure) => this.setState(figure)}
-		          onRelayout       = {(figure) => {this.setState(figure)}}
+		          onRelayout       = {this.mapScaler}
 			      />
 		      </div>
 		      
@@ -842,7 +849,7 @@ class MapDiv extends Component{
 			        config           = {{displayModeBar: false}}
 			        style            = {{width:"100%", height:"100%"}}
 		          onInitialized    = {(figure) => this.setState(figure)}
-		          onRelayout       = {(figure) => {this.setState(figure)}}
+		          onRelayout       = {this.mapScaler}
 			      />
 		      </div>
 		      {this.renderControlBar()}

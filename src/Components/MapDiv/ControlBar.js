@@ -11,22 +11,18 @@ import {
 	pauseButtonStyle, 
 	soundButtonStyle, 
 } from './styles';
-
+// Inline stying here: 
 var sliderBarStyle = {
-	width:window.innerWidth*0.6,  
+	width:window.innerWidth*0.6+20,  
 	height:70,
 	alignItems:'center', 
 	justifyContent:'center', 
 	paddingTop:22,
 }; 
-
-// Place into a container class for use by Parent Component: 
+// Place into a container class for export and use by Parent Component: 
 export default class ControlBar extends Component{
-
 	constructor(props){
-
 		super(props); 
-
 		this.state = {
     	playing:false, 
     	muted:false,
@@ -34,12 +30,10 @@ export default class ControlBar extends Component{
     	height:window.innerHeight, 
     	sliderBarStyle:sliderBarStyle, 
 		}; 
-
-		this.onPause = this.onPause.bind(this); 
-		this.onPlay = this.onPlay.bind(this); 
-		this.onMute = this.onMute.bind(this); 
+		this.onPause          = this.onPause.bind(this); 
+		this.onPlay           = this.onPlay.bind(this); 
+		this.onMute           = this.onMute.bind(this); 
 		this.updateDimensions = this.updateDimensions.bind(this); 
-		this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this); 
 	}
   // Listen to resize events, and call this.updateDimensions() when on is detected. 
   componentDidMount() {
@@ -48,12 +42,9 @@ export default class ControlBar extends Component{
 	// To handle browser resize: 
   updateDimensions() {
   	var slab = Object.assign({},this.state.sliderBarStyle); 
-  	slab.width = window.innerWidth * 0.6; 
+  	slab.width = window.innerWidth * 0.6+20; 
     this.setState({width: window.innerWidth,height:window.innerHeight,sliderBarStyle:slab});
   }; 
-
-  // Lifecycle methods to keep things zippy.
-
   // Determine if an update is needed: 
   shouldComponentUpdate(nextProps,nextState){
   	if(nextProps && nextProps != this.props){
@@ -72,45 +63,32 @@ export default class ControlBar extends Component{
   		return false; 
   	}
   }
-
-
-
-  // Button/slider handlers:
-
   // For the play button: 
   onPlay(){
   	var playing = !this.state.playing; 
   	this.setState({playing:playing})
   	this.props.onPlay();
   }
-
-  // ... the pause button:
+  //...the pause button:
   onPause(){
   	// We are going to make the pause button flash, 300ms. 
   	var playing = !this.state.playing; 
   	this.setState({playing:playing})
   	this.props.onPause(); 
   }
-
-  // ... the mute/unmute button!
+  //...the mute/unmute button!
   onMute(){
   	var muted = !this.state.muted; 
   	this.setState({muted:muted})
   	this.props.onMute(); 
   }
-
-  // Finally, the only necessary function of them all: RENDER!
 	render(){
-
 		// Update styles according to state/props: 
 		playButtonStyle.color  = this.props.playing != null ? 'white' : 'darkgray'; 
 		pauseButtonStyle.color = this.props.playing != null ? 'darkgray' : 'darkgray'; 
 		soundButtonStyle.color = "darkgray";
-
 		// Determining the sound Icon via sound state: 
 		let volIcon = this.state.muted ? "volume-off" : "volume-up"; 
-
-		// Package it all into a div and sent it on its way... 
 		return(
 			<div style = {controlBarStyle}>
 				<div style = {leftButtonDivStyle}>

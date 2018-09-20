@@ -7,6 +7,8 @@ const baseMapLayout = {
     showcoastlines: true,
     projection:{
       type: "miller", 
+      rotation:{lat:0,lon:0},
+      scale:1,
     }, 
     scope:'world',
     showland:true,
@@ -19,6 +21,7 @@ const baseMapLayout = {
     margin:{l:0,r:0,t:0,b:0},
     lonaxis:{range:[-180,180]}, 
     lataxis:{range:[-60,90]},
+    center:{lat:0,lon:0}, 
   },
   margin:{l:0,r:0,t:0,b:0},
   plot_bgcolor:"black",
@@ -31,39 +34,45 @@ const baseMapLayout = {
   },
   height:window.innerHeight-250, 
   datarevision:0, 
+  doubleClick:false,
+  dragmode:false,
 };
 
 // Layout for the temporal line chart: 
 const baseLineLayout = {
   height: 80,
-  width:window.innerWidth*0.6+240,
+  width:window.innerWidth*0.6+200,
   plot_bgcolor:"transparent",
   paper_bgcolor:"transparent",
-  margin:{l:120,r:120,t:0,b:0},
+  margin:{l:100,r:100,t:5,b:2},
   showlegend: false,
   xaxis : {
     fixedrange: true, 
     range: [0, 120], 
     showgrid:false, 
+    linewidth: 1,
+    color:'lightgray',
   }, 
   yaxis:{
     showgrid:false, 
     tickfont:{
       family: 'Courier New',
       size: 16,
-      color: 'white'
+      color: 'white', 
+      weight:800,
     },
     tickvals:[0,], 
     ticktext:['',],
     ticks:'outside',
-    linewidth: 2,
+    linewidth: 1,
+    color:'lightgray',
   },
   datarevision:0, 
   annotations: [
     {
       x: 0,
       y: 5,
-      text: 'REVS/WEEK           ',
+      text: 'REVS/WK        ',
       font:{family:'courier',size:16,color:'white',weight:400}, 
       showarrow: false,
     }
@@ -77,7 +86,7 @@ const baseLineData = [
     y:[], 
     type: 'scatter',
     mode: 'lines',
-    marker:{color:'lightgray'}, 
+    marker:{color:'white'}, 
     hoverinfo: 'none',
     fillcolor:'rgba(128,128,128,0.6)',
     fill:'tozeroy', 
@@ -88,6 +97,7 @@ const baseLineData = [
     type: 'scatter',
     mode: 'lines',
     marker:{color:'white'}, 
+    line:{color:'white'}, 
     hoverinfo: 'none',
     fillcolor:'rgba(128,128,128,0.6)', 
     fill:'tozeroy', 
