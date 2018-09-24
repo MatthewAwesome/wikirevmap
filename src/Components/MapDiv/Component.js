@@ -948,6 +948,7 @@ class MapDiv extends Component{
 			</div>
 		)
 	}
+
 	renderStatRow(){
 		if(this.state.frameData.length > 0){
 			return(
