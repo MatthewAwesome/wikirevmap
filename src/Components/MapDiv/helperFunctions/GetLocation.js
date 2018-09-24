@@ -9,9 +9,10 @@ const baseURL = devMode ?  "http://10.0.0.201:8080/json/":"https://agile-garden-
 
 
 // Assembling the function for export: 
-export default async function GetLocation(userip,server){
+export default async function GetLocation(userObj){
   try{
     // Replacing x's with zeros. The x's jam up the server and trigger errors. 
+    var userip = userObj.user; 
     userip = userip.replace(/x/g,'0'); 
     // baseURL is configured above, and depends if we are local or build for web: 
     let reqURL = baseURL + encodeURIComponent(userip); 
@@ -23,7 +24,12 @@ export default async function GetLocation(userip,server){
     ipData = null; 
     // Do we have data?
     if(typeof ipJson == 'object' && ipJson.longitude && ipJson.latitude){
-  		return ipJson
+      // tack location data onto userObj; 
+      var keys = Object.keys(ipJson);  
+      for(let k = 0; k < keys.length; k++){
+        userObj[keys[k]] = ipJson[keys[k]]; 
+      } 
+  		return userObj
   		ipJson = null; 
     }
     // Crap, we don't have data..  

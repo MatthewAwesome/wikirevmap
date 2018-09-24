@@ -30,13 +30,11 @@ export default class SearchBar extends Component{
     this.state = {value:'',submitFocus:false,textClick:false,Width:window.innerWidth,percent:percent,searchResults:[],visBool:true};
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.shouldComponentUpdate = this.shouldComponentUpdate.bind(this);
-    this.componentDidMount = this.componentDidMount.bind(this); 
-    this.componentWillUnmount = this.componentWillUnmount.bind(this); 
     this.textClick = this.textClick.bind(this); 
     this.updateDimensions = this.updateDimensions.bind(this);
     this.bottomArrayClick = this.bottomArrayClick.bind(this); 
     this.onLength = this.onLength.bind(this);
+    this.clearSearch = this.clearSearch.bind(this); 
   }; 
 
   // To handle browser resize; 
@@ -95,7 +93,7 @@ export default class SearchBar extends Component{
   async handleChange(event) {
     this.setState({value: event.target.value});
     if(event.target.value.length > 2){
-    	await this.onLength(this.state.value); 
+    	await this.onLength(event.target.value); 
     }
   }
 
@@ -104,13 +102,17 @@ export default class SearchBar extends Component{
     this.setState({value:''})
   }
 
+  clearSearch(){
+    this.setState({value:''}); 
+  }
+
   textClick(event){
   	var textClicked = !this.state.textClicked; 
   	this.setState({textClicked:textClicked})
   }
 
   bottomArrayClick(){
-  	this.setState({searchResults:[],visBool:false}); 
+  	this.setState({searchResults:[],visBool:false,value:'',}); 
   }
 
   render(){

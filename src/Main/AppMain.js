@@ -15,7 +15,6 @@ import MapDiv from '../Components/MapDiv/Component';
 // Import the style for AppMain: 
 import {mainStyle} from './styles'; 
 
-console.log(process.env); 
 export default class AppMain extends Component{
 	constructor(props){
 		super(props); 
@@ -33,7 +32,6 @@ export default class AppMain extends Component{
 	};
 	
 	shouldComponentUpdate(nextProps,nextState){
-		console.log('should update?')
 		if(nextProps == null){
 			return true
 		}
@@ -41,7 +39,6 @@ export default class AppMain extends Component{
 			return true
 		}
 	  else if(nextState && nextState.width != this.state.width){
-	  	console.log('updating?')
 			return true; 
 		}
 	  else if(nextState && nextState.height != this.state.height){
@@ -51,7 +48,6 @@ export default class AppMain extends Component{
 			return false 
 		}
 	}
-
 
 	componentDidMount() {
     window.addEventListener("resize", this.updateDimensions);
@@ -63,8 +59,8 @@ export default class AppMain extends Component{
   }; 
 
   // This is the is called when a user clicks on a page of interest. We update the map accordingly. 
-	async searchResultHandler(pageid,pageurl){
-		await this.setState({pageid:pageid,pageurl:pageurl}); 
+	async searchResultHandler(pageid,pageurl,imgurl){
+		await this.setState({pageid:pageid,pageurl:pageurl,imgurl:imgurl}); 
 	}
 
 	// Assembling the App into a single component:  
@@ -75,8 +71,9 @@ export default class AppMain extends Component{
 					searchResultHandler = {this.searchResultHandler}
 				/>
 				<MapDiv 
-					pageid={this.state.pageid}
-					pageurl={this.state.pageurl} 
+					pageid  = {this.state.pageid}
+					pageurl = {this.state.pageurl} 
+					imgurl  = {this.state.imgurl}
 				/>
 			</div>
 		); 

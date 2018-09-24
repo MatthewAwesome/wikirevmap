@@ -14,7 +14,7 @@ const mainStyle = {
 	display:'flex', 
 	flexDirection:'column', 
 	alignItems:'flex-start', 
-	justifyContent:'flex-end', 
+	justifyContent:'flex-start', 
 }; 
 
 export {  

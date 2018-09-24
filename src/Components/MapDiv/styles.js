@@ -82,12 +82,13 @@ const statRowStyle = {
 	fontFamily:'courier', 
 	fontSize:14, 
 	fontWeight:300, 
-	color:'white', 
+	color:'lightgray', 
 	zIndex:1,
 	paddingBottom:2,
 	borderBottomWidth:2, 
 	borderBottomColor:alphaGray5,
-	height:40,
+	height:35,
+	paddingTop:5,
 }
 
 const timePlotContainer = {
@@ -97,27 +98,66 @@ const timePlotContainer = {
 	justifyContent:'center', 
 	alignItems:'flex-start',
 	height:80,
-	paddingTop:5,
+	paddingTop:3,
 }
 
-const timePlotStyle = {
-	width:"60%",
-	height:80,
-	overflow:'hidden',
-	align:'center',
-	paddingLeft:0, 
-	paddingRight:0, 
+const titleRowStyle = {
+	width:"100%", 
+	height:30, 
+	display:'flex',
+	flexDirection:'row', 
+	justifyContent:'center',  
+	alignItems:'center', 
 }
+
+const titleStyle = {
+	height:30, 
+	color:'white', 
+	fontFamily:'courier', 
+	fontSize:24, 
+	fontWeight:400,
+	textAlign:'center',
+	paddingLeft:10,
+}; 
+
+const thumbStyle = {
+	width:30,
+	height:30, 
+	borderRadius:30,
+	borderWidth:"2px", 
+	borderColor:"transparent",
+	fontSize:24, 
+	fontWeight:"400", 
+	color:"white",
+	paddingLeft:0,
+	alignItems:'center', 
+	align:'center'
+}; 
+
+const letterStyle = {
+	width:30,
+	height:30, 
+	fontSize:24, 
+	fontWeight:"400", 
+	color:"white",
+	paddingLeft:8,
+	fontFamily:'courier',
+	textAlign:'center',
+}; 
 
 export { 
 	loadingStyle,
 	loadingTextStyle, 
 	controlBarStyle, 
 	rightButtonDivStyle, 
-	leftButtonDivStyle
-,	playButtonStyle, 
+	leftButtonDivStyle,
+	playButtonStyle, 
 	pauseButtonStyle, 
 	soundButtonStyle, 
 	statRowStyle, 
 	timePlotContainer, 
+	thumbStyle, 
+	letterStyle, 
+	titleStyle, 
+	titleRowStyle,
 }

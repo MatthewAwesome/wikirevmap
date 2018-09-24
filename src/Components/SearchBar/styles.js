@@ -28,9 +28,9 @@ const searchFieldStyle = {
 
 const thumbStyle = {
 	alignItems:'center',
-	width:"40px",
-	height:"40px", 
-	borderRadius:"40px",
+	width:40,
+	height:40, 
+	borderRadius:40,
 	borderWidth:"2px", 
 	borderColor:"transparent",
 	fontSize:32, 
@@ -68,7 +68,7 @@ const minSearchResultStyle = {
 const pageRowStyle = {
 	flexDirection:'row', 
 	display:'flex',
-	height:"50px", 
+	height:50, 
 	justifyContent:'space-between', 
 	alignItems:'center',
 	width: "100%", 
@@ -89,8 +89,19 @@ const searchResultStyle = {
 	zIndex:99,
 }
 
-const letterStyle = thumbStyle; 
-letterStyle.paddingLeft = 10; 
+const letterStyle = {
+	alignItems:'center',
+	width:40,
+	height:40, 
+	borderRadius:40,
+	borderWidth:"2px", 
+	borderColor:"transparent",
+	fontSize:32, 
+	fontWeight:"400", 
+	color:"white",
+	paddingLeft:10,
+	fontFamily:'courier',
+}; 
 
 
 export {

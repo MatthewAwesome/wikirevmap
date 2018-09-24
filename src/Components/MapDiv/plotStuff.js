@@ -28,11 +28,11 @@ const baseMapLayout = {
   paper_bgcolor:"#000",
   autosize:true,
   hoverlabel:{
-    font:{family:['Courier New',], color:'black'}, 
+    font:{family:['Courier New',],size:14, color:'black'}, 
     bgcolor:'white', 
     bordercolor:'white', 
   },
-  height:window.innerHeight-250, 
+  height:window.innerHeight-300, 
   datarevision:0, 
   doubleClick:false,
   dragmode:false,

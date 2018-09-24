@@ -1,16 +1,14 @@
 import React, { Component } from 'react';
 import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
-import {statRowStyle} from './styles'; 
-import {baseMapLayout,baseLineLayout,baseLineData,} from './plotStuff';
-import CheckAndAppend from './helperFunctions/CheckAndAppend'; 
+import {statRowStyle,thumbStyle,letterStyle,titleStyle,titleRowStyle} from './styles'; 
+import {baseMapLayout,baseLineData,} from './plotStuff';
 import GetRevs from './helperFunctions/GetRevs'; 
+import ProcessIpRevs from './helperFunctions/ProcessIpRevs'; 
 import GetLocation from './helperFunctions/GetLocation'; 
-import RemoveDuplicateIps from './helperFunctions/RemoveDuplicateIps'; 
-import FilterRevs from './helperFunctions/FilterRevs'; 
+import UserChecker from './helperFunctions/UserChecker'; 
 import Slider from 'react-rangeslider'; 
 import ReactTimeout from 'react-timeout'; 
-import 'react-rangeslider/lib/index.css'; 
 import ControlBar from './ControlBar'; 
 import TimePlot from './TimePlot'; 
 
@@ -40,7 +38,7 @@ var mapPlotContainer = {
 	flexDirection:'row',
 	justifyContent:'center', 
 	alignItems:'flex-start',
-	height:window.innerHeight-212, 
+	height:window.innerHeight-300, 
 }; 
 
 var statItemStyle = {
@@ -108,6 +106,7 @@ class MapDiv extends Component{
 	    sliderPosition:0,
 	    muted:false, 
 	    revArray:[], 
+	    ipRevArray:[], 
 	    cont:null, 
 	    articleAge:null, 
 	    mapEnds:null, 
@@ -120,6 +119,8 @@ class MapDiv extends Component{
 	    mapDivStyle:mapDivStyle, 
 	    mapPlotContainer:mapPlotContainer, 
 	    statItemStyle:statItemStyle, 
+	    vandalList:[], 
+	    title:'',
   	};
 
   	// Instantiating some audio (typewriter sounds) to be played as frames are animated. 
@@ -150,6 +151,9 @@ class MapDiv extends Component{
 		this.getLineFrames       = this.getLineFrames.bind(this); 
 		this.removeDuplicates    = this.removeDuplicates.bind(this); 
 		this.mapScaler           = this.mapScaler.bind(this); 
+		this.renderMap           = this.renderMap.bind(this); 
+		this.findVandals         = this.findVandals.bind(this); 
+		this.renderTitleBar      = this.renderTitleBar.bind(this); 
 	}
 
   // To handle browser resize; 
@@ -161,8 +165,8 @@ class MapDiv extends Component{
   	var statStyle          = Object.assign({},this.state.statItemStyle); 
   	var heightCheck        = window.innerHeight < 400 ? 400 : window.innerHeight; 
   	divStyle.height        = window.innerHeight-60; 
-  	plotStyle.height       = heightCheck-212; 
-  	mapLayout.height       = heightCheck-212; 
+  	plotStyle.height       = heightCheck-300; 
+  	mapLayout.height       = heightCheck-300; 
   	mapLayout.datarevision = mapLayout.datarevision + 1; 
   	// And update the state accordingly: 
     this.setState({
@@ -210,12 +214,15 @@ class MapDiv extends Component{
 				currentFrame:0, 
 				sliderPosition:0, 
 				anim:null, 
-				lineData:emptyLineData, 
+				lineData:emptyLineData.slice(), 
 				tstep:null, 
 				revArray:[], 
+				ipRevArray:[], 
 				cont:null, 
 				currentSize:'',
 				uniqueEditors:0, 
+				vandalList:[],
+				title:'',
 			});
 		}
 		// Fetching after the clear: 
@@ -316,6 +323,24 @@ class MapDiv extends Component{
 			// And its age: 
 			var articleAge = this.state.now - bday; 
 
+			// Seeing how big each revision is compared to the previous article. That is, how much did a user add or delete?
+			revData.revs = revData.revs.map( (x,i) => {
+				if(i == 0 && this.state.revArray.length == 0){
+					x.diff = x.size; 
+				}
+				else if(i == 0 && this.state.revArray.length > 0){
+					x.diff = x.size - this.state.revArray[this.state.revArray.length-1].size; 
+				}
+				else{
+					x.diff = x.size - revData.revs[i-1].size; 
+				}
+				if(x.user){
+					x.user = x.user.trim(); 
+				}
+				x.vandal = false; 
+				return x; 
+			})
+
 			// This if-statement is only executed when instantiating a page (e.g. the user selected a new page). 
 			if(this.state.bday == null && this.state.articleAge == null){
 				// Take this opportunity to make time vectors and labels: 
@@ -340,19 +365,18 @@ class MapDiv extends Component{
 					lineEnds:lineEnds,
 					mapEnds:mapEnds,
 					labels:labels,
-					fetching:true
+					fetching:true, 
+					title:revData.title,
 				}); 
 			}
 			
-			// Updating our last time: 
-			var lastTime = new Date(revData.revs[revData.revs.length-1].timestamp); 
-			lastTime     = lastTime.getTime(); 
-			// And seeing how many frames we can construct according to lastTime. 
-			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
-			// Concatenating revs, and counding them: 
-			var accRevs      = this.state.revArray.concat(revData.revs); 
-			var currentSize  = accRevs[accRevs.length-1].size/1000; 
-			// Representing the size as a string: 
+			// Concatenating revs, and getting some stats from them:  
+			var currentSize,uniqueEditors,accRevs,newRevs; 
+			newRevs       = revData.revs; 
+			// AccRevs dos 
+			accRevs       = this.state.revArray.concat(revData.revs);
+			uniqueEditors = accRevs.map(x => x.user).filter(this.removeDuplicates).length;  
+			currentSize   = accRevs[accRevs.length-1].size/1000; 
 			currentSize      = currentSize.toString(); 
 			if(currentSize.indexOf('.') != -1 && currentSize.indexOf('.') >= 4 ){
 				currentSize = currentSize.slice(0,currentSize.indexOf('.')); 
@@ -361,15 +385,47 @@ class MapDiv extends Component{
 				currentSize = currentSize.slice(0,4); 
 			}
 			currentSize = currentSize + 'kB'; 
+			
+			// This is all about sampling the data, framesToMake is the number of samples we will grab this iteration: 
+			var lastTime     = new Date(revData.revs[revData.revs.length-1].timestamp); lastTime = lastTime.getTime(); 
+			var framesToMake = this.getNumberOfFrames(lastTime,this.state.frameData); 
 
-			// Getting number of contributors: 
-			var uniqueEditors = accRevs.map(x => x.user).filter(this.removeDuplicates).length; 
-			
-			// Cleaning the revs for mapping: 
-      revData.revs  = FilterRevs(revData.revs); 
-      revData.revs  = RemoveDuplicateIps(revData.revs); 
-      revData.revs  = await CheckAndAppend(revData.revs,this.state.revArray);  
-			
+			// Cleaning the revs for mapping. revData.revs will be merged with this.state.revArray. 
+      revData.revs  = await ProcessIpRevs(revData.revs,this.state.ipRevArray); 
+
+			// This looks for vandalism and tabulates it: newVandals is an object {vandalList:[],vandalCound:int}. 
+			var newVandals = await this.findVandals(newRevs,this.state.vandalList); 
+		
+			// //Here, we loop through newVandals.vandalList and either update the revData.revs section, or make a new entry to signal vandalism. 
+			var baseArray = revData.revs.slice(); 
+			await newVandals.vandalObjList.forEach(
+				async (x) => {
+					if(x != null && x.user && x.user != null){
+						var vandIndex = revData.revs.findIndex( (y) => {if(y.user == x.user){return true}}); 
+						if(vandIndex != -1){
+							// updating rev entry: 
+							revData.revs[vandIndex].vandal = true;  
+							baseArray[vandIndex].vandal = true; 
+						}
+						else{
+							// Make an entry for this vandal!
+							 x = await GetLocation(x);
+							if(x != null){
+								var ipIndex = revData.revs.findIndex( y => y.ip == x.ip); 
+								if(ipIndex != -1){
+									revData.revs[ipIndex].vandal = true;  
+								}
+								else{
+								 	x.vandal = true; 
+								  revData.revs.push(x); 
+								  baseArray.push(x); 
+								}
+							}
+						}
+					}
+				}
+			); 
+	
       // Make desired number of line frames: 	
       if(framesToMake.lineFrames > 0){
       	var lineFrames = this.getLineFrames(accRevs,framesToMake.lineFrames); 
@@ -377,8 +433,8 @@ class MapDiv extends Component{
 
       // Make desired number of map frames: 
 			if(framesToMake.mapFrames > 0){
-				// Make the frames: 
-				var frames = this.framifyData(revData.revs,framesToMake.mapFrames); 
+				// Make/update frames: 
+				var frames = this.framifyData(revData.revs,framesToMake.mapFrames,newVandals); 
 				// we update labels again: 
 				var labels = this.state.labels; 
 				if(frames.frameData.length != this.state.mapEnds.length){
@@ -413,6 +469,7 @@ class MapDiv extends Component{
 					revPullComplete:complete,
 					currentSize:currentSize,
 					uniqueEditors:uniqueEditors, 
+					ipRevArray:revData.revs, 
 				});			
 			}
 			else{
@@ -421,6 +478,7 @@ class MapDiv extends Component{
 					cont:cont,
 					currentSize:currentSize, 
 					uniqueEditors:uniqueEditors, 
+					ipRevArray:revData.revs, 
 				});		
 			}
 		}
@@ -429,6 +487,76 @@ class MapDiv extends Component{
 		}
 	}
 
+	// This function will yield a list of IP vandals for mapping, and a vandal count, to dipslay in the stat bar. 
+	findVandals(revs,existingVandals){
+		// Regexs to identify vandalism and the users responsible for said vandalsim 
+		var vandReg     = /\bvandal/i;
+		var regUsername = /\|(.*?)\]\]/g;
+		// An array of vandals: 
+		var vandalList = []; 
+		var vandalObjList = []; 
+		// Keeping a count of those assholes:
+		var vandalCount = 0; 
+		// Loop through revs and identify vandals: 
+		for(let r in revs){
+			// Some revs don't have comments, if-statement to avoid error: 
+			if(revs[r].comment && revs[r].comment != null){
+				var vandCheck = revs[r].comment.search(vandReg); 
+				// If we found 'vandal' in the comment, vandalism has been identified: 
+				if(vandCheck != -1 && r > 0){
+					vandalCount += 1; 
+					// Checking to see if a user has been identified as the vandal: 
+					var possibleUsers = revs[r].comment.match(regUsername);
+					if(possibleUsers != null){
+						for(let p in possibleUsers){
+							var trimmed = possibleUsers[p].replace(/[|\]]/g,"").trim().replace(' ',''); 
+							// Only caring about IP vandals here, also making sure we don't double dip them: 
+							var trimMatch = trimmed.match(/[.:]/g); 
+							if(trimMatch != null && trimmed.length > 5 && existingVandals.indexOf(trimmed) == -1){
+								var timeObject = new Date(revs[r].timestamp); 
+								var msTime     = timeObject.getTime(); 
+								vandalObjList.push({
+									user:trimmed,
+									userid:0,
+									timestamp:revs[r].timestamp,
+									timesArray:[msTime], 
+									vandal:true,
+								}); 
+								vandalList.push(trimmed); 
+							}
+						}
+					}
+					// Similar to the above, but we look for users in a much more vague way: 
+					else{ 
+						var comment = revs[r].comment.slice(vandCheck); 
+						var words = comment.split(' '); 
+						for(let w in words){
+							var wordNumberMatch = words[w].match(/^\d/); 
+							var wordCarMatch = words[w].match(/[.:]/g)
+							if(wordNumberMatch != null && wordCarMatch != null ){
+								var word = words[w].trim(); 
+								if(word.length > 5 && existingVandals.indexOf(word) == -1){
+									var timeObject = new Date(revs[r].timestamp); 
+									var msTime     = timeObject.getTime(); 
+									vandalObjList.push({
+										user:word,
+										userid:0,
+										timestamp:revs[r].timestamp,
+										timesArray:[msTime], 
+										vandal:true, 
+									}); 
+									vandalList.push(word); 
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return {vandalObjList:vandalObjList,vandalList:vandalList,vandalCount:vandalCount}; 
+	}
+
+	// this function serves as a callback to array.filter()
   removeDuplicates( item, index, inputArray ){
     if(item != undefined){
       return inputArray.indexOf(item) == index;
@@ -479,35 +607,39 @@ class MapDiv extends Component{
 	}
 
 	// Function to place data into frames as dictated by the incoming data: 
-	framifyData(revArray,framesToMake){
+	framifyData(revArray,framesToMake,vandalList){
 		try{
 			// Getthe 'maxTimes'. This might be unnecessary... 
 			var times     = revArray.map( (x) => {return x.timesArray.length}); 
 			var maxTimes  = Math.max(...times);
 			var newFrames = []; 
 			var oldFrames = this.state.frameData; 
-			// Filter data according to frame! 
+
+
+			// Push Elements to new frames: 
+			//for(let i = oldFrames.length; i < oldFrames.length + framesToMake; i++){
 			for(let i = oldFrames.length; i < oldFrames.length + framesToMake; i++){
-				// Get max time. 
-				// Filter revs accordingly: 
-				var filteredData = revArray.filter( (x) => {
-					var tIndex = x.timesArray.findIndex( t => t < this.state.mapEnds[i]); 
-					if(tIndex != -1){
-						return true
-					}
-					else{
-						return false; 
-					}
-				}).map(
-					(x) => {
-						var last_t_index = x.timesArray.findIndex( t => t > this.state.mapEnds[i]);
-						if(last_t_index != -1){
-							x.timesArray = x.timesArray.slice(0,last_t_index);
+				// Update old frames: 
+					// Make new frames: 
+					var filteredData = revArray.filter( (x) => {
+						var tIndex = x.timesArray.findIndex( t => t < this.state.mapEnds[i]); 
+						if(tIndex != -1){
+							return true
 						}
-						return x 
-					}
-				);
-				newFrames.push(filteredData); 			 
+						else{
+							return false; 
+						}
+					}).map(
+						(x) => {
+							var last_t_index = x.timesArray.findIndex( t => t > this.state.mapEnds[i]);
+							if(last_t_index != -1){
+								x.timesArray = x.timesArray.slice(0,last_t_index);
+							}
+							return x 
+						}
+					);
+					newFrames.push(filteredData); 
+					 
 			}
 			newFrames = this.getFrameData(newFrames,maxTimes)
 			var nn = oldFrames.concat(newFrames);
@@ -525,52 +657,92 @@ class MapDiv extends Component{
 		var mappedData = data.map(
 			(x) => {
 				// Get the data from x, an array of objects: 
-				var lats       = this.Unpack(x,'latitude') ;
-		    var lons       = this.Unpack(x,'longitude'); 
-		    var tstamps    = this.Unpack(x,'timesArray'); 
+				var lats            = this.Unpack(x,'latitude') ;
+		    var lons            = this.Unpack(x,'longitude'); 
+		    var tstamps         = this.Unpack(x,'timesArray'); 
 	      // Arrays to house of plot info:  
 		    var markerSizes     = []; 
 		    var textArray       = []; 
 		    var markerColors    = []; 
 		    var markerOpacities = [];
-		    var scale           = 35; 
+		    var userArray       = []; 
+		    var hoverlabels     = []; 
 		    x.forEach(
 		    	(y,index) => {
-				    var markerSize = Math.log(y.timesArray.length * Math.E) * 3;  
-				    var editStr = y.timesArray.length == 1 ? ' Edit from ' : ' Edits from '; 
-			      var markerText = '<b>' + y.timesArray.length.toString() + editStr; 
-			      if(y.city && y.city.length != 0){
-			          markerText = markerText + y.city + ","; 
-			      }
-			      if(y.region_name && y.region_name.length != 0){
-			        markerText = markerText + y.region_name + ","; 
-			      }
-			      if(y.country_name && y.country_name.length != 0){
-			        markerText = markerText + y.country_name + '.'; 
-			      }
-			      markerText = markerText + '</b>'; 
-			      textArray.push(markerText); 
-			      markerSizes.push(markerSize); 
-			      markerColors.push('white');
-			      markerOpacities.push(y.timesArray.length / maxTimes); 	    		
-		    	}
+		    		if(y.vandal == false){
+					    var markerSize = Math.log(y.timesArray.length * Math.E) * 4;  
+					    var editStr = y.timesArray.length == 1 ? ' Edit': ' Edits' 
+				      var markerText = '<b>' + y.timesArray.length.toString() + editStr + '</b><br>'; 
+				      if(y.totalDiff && y.totalDiff >= 0){
+				      	markerText = markerText + '<b style="color:#4AC948;">' + Math.abs(y.totalDiff).toString() + ' bytes added</b><br>'; 
+				      }
+				      else if(y.totalDiff && y.totalDiff < 0){
+				      	markerText = markerText + '<b style="color:red;">' + Math.abs(y.totalDiff).toString() + ' bytes deleted</b><br>'; 
+				      } 
+				      else if(y.totalDiff == 0){
+				      	markerText = markerText + '<b style="grey:#4AC948;">' + Math.abs(y.totalDiff).toString() + ' bytes added</b><br>'; 
+				      }
+				      else{
+				      	// console.log(y.totalDiff, typeof y.totalDiff)
+				      	// console.log(y); 
+				      }
+				      markerText = markerText + '<b>'; 
+				      if(y.city && y.city.length != 0){
+				          markerText = markerText + y.city + ","; 
+				      }
+				      if(y.region_name && y.region_name.length != 0){
+				        markerText = markerText + y.region_name + ","; 
+				      }
+				      if(y.country_name && y.country_name.length != 0){
+				        markerText = markerText + y.country_name + '.'; 
+				      }
+				      markerText = markerText + '</b>'; 
+				      textArray.push(markerText); 
+				      markerSizes.push(markerSize); 
+				      markerColors.push('white');
+				      markerOpacities.push(y.timesArray.length / maxTimes); 	 
+				      userArray.push(y.user);    		
+			    	}
+				    else if(y.vandal == true){
+					    var markerSize = Math.log(y.timesArray.length * Math.E) * 4;  
+					    var editStr = "Location of Potential Vandal"; 
+				      var markerText = '<b style="color:white;">' + editStr; 
+				      markerText = markerText + '</b>' + '<br>' + '<b style="color:white;">'; 
+				      if(y.city && y.city.length != 0){
+				          markerText = markerText + y.city + ","; 
+				      }
+				      if(y.region_name && y.region_name.length != 0){
+				        markerText = markerText + y.region_name + ","; 
+				      }
+				      if(y.country_name && y.country_name.length != 0){
+				        markerText = markerText + y.country_name; 
+				      }
+				      markerText = markerText + '</b>' + '<br>';
+				      textArray.push(markerText); 
+				      markerSizes.push(markerSize); 
+				      markerColors.push('red');
+				      markerOpacities.push(y.timesArray.length / maxTimes); 	 
+				      userArray.push(y.user);  			    	
+				    }
+			  	}
 		    )
 		    var dataContainer = [{
 		      type: 'scattergeo',
 		      lat: lats,
 		      lon: lons,
 		      hoverinfo: 'text',
-		      hoverlabel:{font:{family:'Courier New',size:14}},
+		      hoverlabel:{font:{family:'Courier New',size:14},bgcolor:markerColors,align:'center'},
 		      text: textArray,
 		      marker: {
 		        size: markerSizes,
 		        line: {
 		          color: 'white',
-		          width: 2
+		          width: 0
 		        },
 		        color: markerColors,
 		      }, 
 		      dates:tstamps, 
+		      baseSizes:markerSizes, 
 		    }]
 		    return dataContainer
 			}
@@ -699,8 +871,7 @@ class MapDiv extends Component{
 				if(roundedVal >= this.state.frameData.length){
 					roundedVal = this.state.frameData.length-1; 
 				}
-				console.log(roundedVal); 
-				var data = this.state.frameData[roundedVal]; 
+				var data   = this.state.frameData[roundedVal]; 
 				var layout = Object.assign({},this.state.layout); 
 				layout.datarevision = layout.datarevision + 1; 
 				await this.setState({data:data,currentFrame:roundedVal,sliderPosition:val,anim:null,tstep:val,layout:layout,}); 
@@ -713,6 +884,70 @@ class MapDiv extends Component{
 		}
 	}
 
+	// This function keeps the map from disappering. 
+	async mapScaler(figure){
+		var layout     = Object.assign({},this.state.layout); 
+		var updateData = false; 
+		var update     = false; 
+		// Bounding the upper and lower latitudes. Map will not vertically pan beyong (-40,60)
+		if(figure["geo.center.lat"] != null){
+			if(figure["geo.center.lat"] > 60){
+				layout.geo.center.lat = 60; 
+				update = true; 
+			}
+			else if(figure["geo.center.lat"] < -40){
+				layout.geo.center.lat = -40; 
+				update = true; 
+			}
+		}
+		if(figure["geo.projection.scale"] != null){
+			// Preventing the user from zooming any further out. Doing so excessively tends to make the map microscopic. 
+			updateData = true; 
+			update     = true;
+			if(figure["geo.projection.scale"] < 1){
+				layout.geo.projection.scale = 1; 
+			}
+		}
+		// Update layout only: 
+		if(update === true && updateData === false){
+			layout.datarevision = layout.datarevision + 1; 
+			await this.setState({layout:layout}); 
+		}
+		// Update layout and data (i.e. resize the markers). 
+		else if(update === true && updateData === true){ 
+			var frameData   = this.state.frameData.slice();
+			var data        = this.state.data.slice(); 
+			var markerScale = layout.geo.projection.scale <= 35 ? layout.geo.projection.scale : 25; 
+			for(let f in frameData){
+				frameData[f][0].marker.size = frameData[f][0].baseSizes.map( (x) => {return x*Math.E**((markerScale-1)/10)});
+			}
+			// And make sure to update the current frame!
+			if(data && data[0].marker && data[0].marker.size && data[0].baseSizes){
+				data[0].marker.size = data[0].baseSizes.map((x) => {return x*Math.E**((markerScale-1)/10)});
+			}
+			layout.datarevision = layout.datarevision + 1;
+			await this.setState({layout:layout,frameData:frameData,data:data}); 
+		}
+	}
+
+	renderTitleBar(){
+		// Determining if we have an image etc. 
+		if(this.props.imgurl && this.props.imgurl.indexOf(".svg") == -1){
+			var thumbComponent = <img src={this.props.imgurl} style = {thumbStyle} />; 
+		}
+		else if(this.props.imgurl && this.props.imgurl.indexOf(".svg") != -1){
+			var thumbComponent = <img src={this.props.imgurl} style = {thumbStyle} />; 
+		}
+		else{
+			var thumbComponent = <div style = {letterStyle}>{this.state.title.slice(0,1)}</div>; 
+		}
+		// Render it up: 
+		return(
+			<div style = {titleRowStyle}>
+			  <div style = {titleStyle}>{this.state.title}</div>
+			</div>
+		)
+	}
 	renderStatRow(){
 		if(this.state.frameData.length > 0){
 			return(
@@ -753,48 +988,28 @@ class MapDiv extends Component{
 		else{
 			return(null); 
 		}
-	}///
-
-	async mapScaler(figure){
-		var layout = Object.assign({},this.state.layout); 
-		var update = false; 
-		if(figure["geo.center.lat"] != null){
-			var centerLat = figure["geo.center.lat"];
-			if(centerLat > 60){
-				layout.geo.center.lat = 60; 
-				update = true; 
-			}
-			else if(centerLat < -40){
-				layout.geo.center.lat = -40; 
-				update = true; 
-			}
-		}
-		if(figure["geo.center.lon"] != null){
-			var centerLon = figure["geo.center.lon"];
-		}
-		if(figure["geo.projection.rotation.lon"] != null){
-			var rotationLon = figure["geo.projection.rotation.lon"]; 
-		}
-		if(figure["geo.projection.scale"]){
-			var scale = figure["geo.projection.scale"]; 
-			if(scale < 1){
-				update = true; 
-				layout.geo.projection.scale = 1; 
-			}
-		}
-		if(update === true){
-			layout.datarevision = layout.datarevision + 1; 
-			await this.setState({layout:layout}); 
-		}
 	}
 
-	/// Define a render function for our class: 
-	render(){
+	renderMap(){
+		return(
+			<div style = {this.state.mapPlotContainer}>
+	      <Plot
+	        data          = {this.state.data}
+	        layout        = {this.state.layout}
+	        config        = {{displayModeBar: false}}
+	        style         = {{width:"100%", height:this.state.mapPlotContainer.height}}
+          onInitialized = {(figure) => this.setState(figure)}
+          onRelayout    = {this.mapScaler}
+	      />
+      </div>
+		)
+	}
 
+	render(){
+		console.log(this.state.title);
 		var layout = this.state.layout; 
 		var frames = this.state.frameData; 
 		var data   = this.state.data; 
-
 
 		if(this.state.fetching == true){
 			return(
@@ -806,34 +1021,17 @@ class MapDiv extends Component{
 		else if(this.state.fetching == false && this.state.data != null && this.state.layout != null && this.state.frameData && this.state.frameData.length == 0){
 			return(
 				<div style = {this.state.mapDivStyle}>
-					<div style = {this.state.mapPlotContainer}>
-			      <Plot
-			        data={this.state.data}
-			        layout           = {this.state.layout}
-			        config           = {{displayModeBar: false}}
-			        style            = {{width:"100%", height:this.state.mapPlotContainer.height}}
-		          onInitialized    = {(figure) => this.setState(figure)}
-		          onRelayout       = {this.mapScaler}
-			      />
-		      </div>
+					{this.renderTitleBar()}
+					{this.renderMap()}
 		    </div>
 			)
 		}
 		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData  && this.state.height >= 400 ){
 			return(
 				<div style = {this.state.mapDivStyle}>
-					{this.renderStatRow()}
-					<div style = {this.state.mapPlotContainer}>
-			      <Plot
-			        data={this.state.data}
-			        layout           = {this.state.layout}
-			        config           = {{displayModeBar: false}}
-			        style            = {{width:"100%", height:this.state.mapPlotContainer.height}}
-		          onInitialized    = {(figure) => this.setState(figure)}
-		          onRelayout       = {this.mapScaler}
-			      />
-		      </div>
-		      
+					{this.renderTitleBar()}
+					{this.renderMap()}
+					{this.renderStatRow()}		      
 		      <TimePlot lineData={this.state.lineData} pageid = {this.props.pageid}/>
 		      {this.renderControlBar()}
 		    </div>
@@ -842,17 +1040,10 @@ class MapDiv extends Component{
 		else if(this.state.fetching == false && this.state.data && this.state.layout && this.state.frameData && this.state.height < 400){
 			return(
 				<div style = {mapDivStyle}>
-					<div style = {mapPlotContainer}>
-			      <Plot
-			        data={this.state.data}
-			        layout           = {this.state.layout}
-			        config           = {{displayModeBar: false}}
-			        style            = {{width:"100%", height:"100%"}}
-		          onInitialized    = {(figure) => this.setState(figure)}
-		          onRelayout       = {this.mapScaler}
-			      />
-		      </div>
+					{this.renderTitleBar()}
+					{this.renderMap()}
 		      {this.renderControlBar()}
+					}
 		    </div>
 	    )			
 		}
@@ -863,7 +1054,7 @@ class MapDiv extends Component{
 				</div>
 			)
 		}
-	}////
+	}
 }
 
 export default ReactTimeout(MapDiv)

@@ -52,7 +52,7 @@ export default class PageRow extends Component{
 	  				backgroundColor:this.state.bgcolor,  
 	  				paddingLeft:0,
 	  		}}
-				onClick     = { ()      => {this.props.searchResultHandler(this.props.pageid,this.props.url); this.props.resultsClearFun();}}
+				onClick     = { ()      => {this.props.searchResultHandler(this.props.pageid,this.props.url,this.props.imgUrl); this.props.resultsClearFun();}}
 				onMouseDown = { (event) => this.clickHandler(event) }
 				onMouseUp   = { (event) => this.clickHandler(event) }
 			>

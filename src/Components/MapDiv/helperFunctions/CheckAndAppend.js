@@ -1,6 +1,12 @@
 import GetLocation from './GetLocation'; 
-
+import FilterRevs  from './FilterRevs'; 
+import RemoveDuplicateIps from './RemoveDuplicateIps'; 
+// We 
 export default async function CheckAndAppend(newRevs,existingRevs){
+
+	newRevs = FilterRevs(newRevs); 
+	newRevs = RemoveDuplicateIps(newRevs); 
+	
 	if(existingRevs.length == 0){
     await newRevs.reduce( 
   	async function (acc,currElement){
@@ -25,6 +31,7 @@ export default async function CheckAndAppend(newRevs,existingRevs){
 			if(checkIndex != -1){
 				// make the time string into a time number: 
 				existingRevs[checkIndex].timesArray = existingRevs[checkIndex].timesArray.concat(x.timesArray); 
+				existingRevs[checkIndex].totalDiff  = existingRevs[checkIndex].totalDiff + x.totalDiff; 
 			}
 			else if(x.user != null){
 				// We have a new one!
