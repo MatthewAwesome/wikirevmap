@@ -59,13 +59,69 @@ export default class TimePlot extends Component{
   	else if(prevProps && prevProps != this.props){
   		var layout = this.state.layout; 
   		layout.datarevision += 1; 
-  		// get the value;
-  		var maxVal   = Math.max(...this.props.lineData[0].y);
-  		var roundVal = maxVal <= 1 ? 1 : Math.floor(maxVal); 
-  		var midVal   = maxVal/2; 
-  		layout.yaxis.tickvals[0] = roundVal; 
-  		layout.yaxis.ticktext[0] = "<b>" + roundVal.toString() + "</b>"
+  		// get the value (we use changes in data to change the layout...)
+  		var maxEdits   = Math.max(...this.props.lineData[0].y);
+  		var roundEdits = maxEdits <= 1 ? 1 : Math.floor(maxEdits); 
+  		var midVal   = maxEdits/2;
+  		layout.yaxis.tickvals[0] = roundEdits; 
+  		layout.yaxis.ticktext[0] = this.props.traceVis[0] ? "<b>" + roundEdits.toString() + "</b>" : '';
+  		// for size: 
+  		var maxSize   = Math.max(...this.props.lineData[1].y);
+  		var roundSize = maxSize <= 1 ? 1 : Math.floor(maxSize); 
+  		// for contributors: 
+  		var maxContribs =  Math.max(...this.props.lineData[2].y);
+  		var roundContribs = maxSize <= 1 ? 1 : Math.floor(maxContribs); 
+  		// We add tick vals depending on visiblility: 
+  		if(this.props.traceVis[1] == true && this.props.traceVis[2] == false){
+	  		layout.yaxis2.tickvals[0] = roundSize; 
+	  		layout.yaxis2.ticktext[0] = '<b style="color:rgb(255,0,235);">' + roundSize.toString() + '</b>'; 
+	  		layout.yaxis2.visible = true; 
+	  		layout.annotations[1].visible = true; 
+	  		layout.annotations[2].visible = false; 
+				layout.annotations[3].visible = false; 
+				// clear the other one: 
+				layout.yaxis3.tickvals[0] = 0;  
+	  		layout.yaxis3.ticktext[0] = '';
+	  		layout.yaxis3.visible = false; 
+  		}
+  		else if(this.props.traceVis[1] == false && this.props.traceVis[2] == true){
+  	  	layout.yaxis3.tickvals[0] = roundContribs; 
+	  		layout.yaxis3.ticktext[0] = "<b>" + roundContribs.toString() + "</b>"	
+	  		layout.yaxis3.visible = true;
+	  		layout.annotations[1].visible = false; 
+	  		layout.annotations[2].visible = true; 
+				layout.annotations[3].visible = false; 
+				layout.yaxis2.tickvals[0] = 0;  
+	  		layout.yaxis2.ticktext[0] = '';
+	  		layout.yaxis2.visible = false;
+  		}
+  		else if(this.props.traceVis[1] == true && this.props.traceVis[2] == true){
+  			// need to take both into account: 
+  	  	layout.yaxis3.tickvals[0] = roundContribs; 
+	  		layout.yaxis3.ticktext[0] = '<b style="color:rgb(150, 255, 2);"> ' + roundContribs.toString() + '</b><b style="color:rgb(255,0,235);">(' + maxSize.toString() +')</b>'
+	  		layout.annotations[1].visible = false; 
+	  		layout.annotations[2].visible = false; 
+				layout.annotations[3].visible = true;
+				layout.yaxis2.visible = false;
+				layout.yaxis3.visible = true; 			
+  		}
+  		else{
+  			layout.annotations[1].visible = false; 
+  			layout.annotations[2].visible = false; 
+				layout.annotations[3].visible = false; 
+				layout.yaxis2.visible = false;
+				layout.yaxis3.visible = false;
+  		}
+			// Move the annotations:  	 
   		layout.annotations[0].y  = midVal; 
+  		layout.annotations[1].y  = midVal/2; 
+  		layout.annotations[2].y  = midVal; 
+  		layout.annotations[3].y  = midVal; 
+  		layout.annotations[0].visible = this.props.traceVis[0]; 
+  		// layout.yaxis2.visible = true;  
+  		// layout.yaxis3.visible = this.props.traceVis[2];
+
+  		// setState! 
   		this.setState({layout:layout}); 
   	}
   }

@@ -1,6 +1,5 @@
 // Styles for the MapDiv: 
-import {alphaGray2,alphaGray5} from '../../Extras/grays'; 
-
+import {alphaGray1,alphaGray2,alphaGray3,alphaGray4,alphaGray5} from '../../Extras/grays'; 
 
 const loadingStyle = {
 	height:"100%", 
@@ -20,7 +19,7 @@ const loadingTextStyle = {
 	fontWeight:400,
 };  
 
-var controlBarStyle = {
+const controlBarStyle = {
 	width:"100%", 
 	display:'flex', 
 	flexDirection:'row', 
@@ -73,11 +72,19 @@ const soundButtonStyle = {
 	padding:10,
 }; 
 
+const rewindButtonStyle = {
+	height:"28px",
+	width:"28px",
+	borderRadius:"28px",
+	padding:10,
+	color:'darkgray',
+}; 
+
 const statRowStyle = {
 	display:'flex', 
 	flexDirection:'row', 
 	width:"100%", 
-	justifyContent:'space-between', 
+	justifyContent:'space-around', 
 	alignItems:'center', 
 	fontFamily:'courier', 
 	fontSize:14, 
@@ -85,10 +92,8 @@ const statRowStyle = {
 	color:'lightgray', 
 	zIndex:1,
 	paddingBottom:2,
-	borderBottomWidth:2, 
-	borderBottomColor:alphaGray5,
 	height:35,
-	paddingTop:5,
+	paddingTop:10,
 }
 
 const timePlotContainer = {
@@ -145,6 +150,25 @@ const letterStyle = {
 	textAlign:'center',
 }; 
 
+const mapDivStyle = {
+	width: "100%",
+	display:'flex', 
+	flexDirection:'column',
+	justifyContent:'flex-start', 
+	alignItems:'center', 
+	height:window.innerHeight-60,
+}; 
+
+const mapPlotContainer = {
+	width:"100%",
+	display:'flex',
+	flexDirection:'row',
+	justifyContent:'center', 
+	alignItems:'flex-start',
+	height:window.innerHeight-300, 
+	paddingBottom:4,
+}; 
+
 export { 
 	loadingStyle,
 	loadingTextStyle, 
@@ -160,4 +184,7 @@ export {
 	letterStyle, 
 	titleStyle, 
 	titleRowStyle,
+	rewindButtonStyle,
+	mapPlotContainer,
+	mapDivStyle,
 }

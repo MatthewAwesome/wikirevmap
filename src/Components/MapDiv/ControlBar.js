@@ -10,6 +10,7 @@ import {
 	playButtonStyle, 
 	pauseButtonStyle, 
 	soundButtonStyle, 
+	rewindButtonStyle,
 } from './styles';
 // Inline stying here: 
 var sliderBarStyle = {
@@ -116,8 +117,8 @@ export default class ControlBar extends Component{
 				<div style = {rightButtonDivStyle}>
 					<FontAwesomeIcon
 						icon="undo"
-						onClick ={this.onMute}
-						style = {soundButtonStyle}
+						onClick ={ () => this.props.onRewind() }
+						style = {rewindButtonStyle}
 					/>
 					<FontAwesomeIcon
 						icon={volIcon}

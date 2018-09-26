@@ -4,7 +4,7 @@ import GetLocation from './GetLocation';
 import FilterRevs  from './FilterRevs'; 
 import RemoveDuplicateIps from './RemoveDuplicateIps'; 
 
-export default async function CheckAndAppend(newRevs,existingRevs){
+export default async function ProcessIpRevs(newRevs,existingRevs){
   newRevs = FilterRevs(newRevs); 
 	newRevs = RemoveDuplicateIps(newRevs); 
 	// Here, existingRevs is empty. We build it up using newRevs and grabbing the location for each IP: 

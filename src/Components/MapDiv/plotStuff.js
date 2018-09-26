@@ -38,6 +38,11 @@ const baseMapLayout = {
   dragmode:false,
 };
 
+// color palette: 
+// rgb(0, 255, 255)
+// rgb(198, 0, 235)
+// rgb(150, 255, 2)
+
 // Layout for the temporal line chart: 
 const baseLineLayout = {
   height: 80,
@@ -49,16 +54,18 @@ const baseLineLayout = {
   xaxis : {
     fixedrange: true, 
     range: [0, 120], 
-    showgrid:false, 
-    linewidth: 1,
-    color:'lightgray',
+    showgrid:false,
+    zeroline: false,
+    zerolinewidth:2,
+    zerolinecolor:'lightgray',
+    visible:true,
   }, 
   yaxis:{
     showgrid:false, 
     tickfont:{
       family: 'Courier New',
       size: 16,
-      color: 'white', 
+      color: 'rgb(0, 255, 255)', 
       weight:800,
     },
     tickvals:[0,], 
@@ -66,47 +73,130 @@ const baseLineLayout = {
     ticks:'outside',
     linewidth: 1,
     color:'lightgray',
+    fixedrange: true,
+    range:[0,], 
+    visible:true,
+    rangemode: 'nonnegative',
+  },
+  yaxis2:{
+    showgrid:false, 
+    tickfont:{
+      family: 'Courier New',
+      size: 16,
+      color: 'rgb(255, 255, 235)', 
+      weight:800,
+    },
+    anchor: 'x',
+    tickvals:[0,], 
+    ticktext:['',],
+    ticks:'outside',
+    linewidth: 1,
+    color:'lightgray',
+    overlaying: 'y',
+    side: 'right', 
+    range:[0,], 
+    fixedrange: true,
+    visible:false,
+    rangemode: 'nonnegative',
+  },
+  yaxis3:{
+    showgrid:false, 
+    tickfont:{
+      family: 'Courier New',
+      size: 16,
+      color: 'rgb(150, 255, 2)', 
+      weight:800,
+    },
+    anchor: 'x',
+    tickvals:[0,], 
+    ticktext:['',],
+    ticks:'outside',
+    linewidth: 1,
+    color:'lightgray',
+    overlaying: 'y',
+    side: 'right', 
+    range:[0,], 
+    fixedrange: true,
+    visible:false,
+    rangemode: 'nonnegative',
   },
   datarevision:0, 
   annotations: [
     {
       x: 0,
-      y: 5,
-      text: 'REVS/WK        ',
-      font:{family:'courier',size:16,color:'white',weight:400}, 
+      y: 0,
+      text: 'EDITS/WK        ',
+      font:{family:'courier',size:14,color:'rgb(0,255,255)',weight:400}, 
       showarrow: false,
-    }
+      visible:false,
+    }, 
+    {
+      x:120, 
+      y:0, 
+      text: '<b style="color:rgb(255,0,235);">         SIZE,kB</b>',
+      font:{family:'courier',size:14,color:'rgb(255, 0, 235)',weight:400}, 
+      showarrow: false,
+      visible:false,     
+    },
+    {
+      x:120, 
+      y:0, 
+      text: '<b style="color:;rgb(150, 255, 2)">        EDITORS</b>',
+      font:{family:'courier',size:14,color:'rgb(150, 255, 2)',weight:400}, 
+      showarrow: false,
+      visible:false,     
+    }, 
+    {
+      x:120, 
+      y:0, 
+      text: '<b style="color:rgb(150, 255, 2);">      EDITORS </b><b style="color:rgb(255,0,235);">(Size,kB)</b>',
+      font:{family:'courier',size:14,color:'rgb(255, 0, 235)',weight:400}, 
+      showarrow: false,
+      visible:false,     
+    },   
   ], 
 }; 
+// rgb(255, 123, 0)
+const traceOne = {
+  x:[0,], 
+  y:[0,], 
+  type: 'scatter',
+  mode: 'lines',
+  line:{color:'rgb(0, 255, 255)',width:2},
+  hoverinfo: 'none',
+  name: 'rev_v_time', 
+  yaxis:'y1',
+  visible:true,
+}; 
 
-// Instantiate the data structure for our line data: 
-const baseLineData = [
-  {
-    x:[], 
-    y:[], 
-    type: 'scatter',
-    mode: 'lines',
-    marker:{color:'white'}, 
-    hoverinfo: 'none',
-    fillcolor:'rgba(128,128,128,0.6)',
-    fill:'tozeroy', 
-  }, 
-  {
-    x:[], 
-    y:[], 
-    type: 'scatter',
-    mode: 'lines',
-    marker:{color:'white'}, 
-    line:{color:'white'}, 
-    hoverinfo: 'none',
-    fillcolor:'rgba(128,128,128,0.6)', 
-    fill:'tozeroy', 
-  }, 
-]; 
-// And now some stuff for our line chart: 
+const traceTwo = {
+  x:[0,], 
+  y:[0,], 
+  type: 'scatter',
+  mode: 'lines',
+  line:{color:'rgb(255, 0, 235)',width:2}, 
+  hoverinfo: 'none',
+  name:'size_v_time', 
+  yaxis: 'y2',
+  visible:false,
+}; 
+
+const traceThree = {
+  x:[0,], 
+  y:[0,], 
+  type: 'scatter',
+  mode: 'lines',
+  line:{color:'rgb(150, 255, 2)',width:2}, 
+  hoverinfo: 'none', 
+  name:'contribs', 
+  visible:false,
+  yaxis:'y3',
+}
 
 
-export{baseMapLayout,baseLineLayout,baseLineData}; 
+
+
+export{baseMapLayout,baseLineLayout,traceOne,traceTwo,traceThree,}; 
 
   // annotations:[
   // 	{
