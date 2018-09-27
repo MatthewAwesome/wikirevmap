@@ -68,13 +68,17 @@ export default class TimePlot extends Component{
   		// for size: 
   		var maxSize   = Math.max(...this.props.lineData[1].y);
   		var roundSize = maxSize <= 1 ? 1 : Math.floor(maxSize); 
+  		var maxSizeStr = maxSize.toString().slice(0,4); 
+  		if(maxSizeStr.indexOf('.') == 3){
+  			maxSizeStr = maxSizeStr.slice(0,3); 
+  		}
   		// for contributors: 
   		var maxContribs =  Math.max(...this.props.lineData[2].y);
-  		var roundContribs = maxSize <= 1 ? 1 : Math.floor(maxContribs); 
+  		var roundContribs = maxContribs <= 1 ? 1 : Math.floor(maxContribs); 
   		// We add tick vals depending on visiblility: 
   		if(this.props.traceVis[1] == true && this.props.traceVis[2] == false){
-	  		layout.yaxis2.tickvals[0] = roundSize; 
-	  		layout.yaxis2.ticktext[0] = '<b style="color:rgb(255,0,235);">' + roundSize.toString() + '</b>'; 
+	  		layout.yaxis2.tickvals[0] = maxSize; 
+	  		layout.yaxis2.ticktext[0] = '<b style="color:rgb(255,0,235);">' + maxSizeStr + '</b>'; 
 	  		layout.yaxis2.visible = true; 
 	  		layout.annotations[1].visible = true; 
 	  		layout.annotations[2].visible = false; 
@@ -98,7 +102,7 @@ export default class TimePlot extends Component{
   		else if(this.props.traceVis[1] == true && this.props.traceVis[2] == true){
   			// need to take both into account: 
   	  	layout.yaxis3.tickvals[0] = roundContribs; 
-	  		layout.yaxis3.ticktext[0] = '<b style="color:rgb(150, 255, 2);"> ' + roundContribs.toString() + '</b><b style="color:rgb(255,0,235);">(' + maxSize.toString() +')</b>'
+	  		layout.yaxis3.ticktext[0] = '<b style="color:rgb(150, 255, 2);">' + roundContribs.toString() + '</b><b style="color:rgb(255,0,235);">(' + maxSizeStr +')</b>'
 	  		layout.annotations[1].visible = false; 
 	  		layout.annotations[2].visible = false; 
 				layout.annotations[3].visible = true;
@@ -114,7 +118,7 @@ export default class TimePlot extends Component{
   		}
 			// Move the annotations:  	 
   		layout.annotations[0].y  = midVal; 
-  		layout.annotations[1].y  = midVal/2; 
+  		layout.annotations[1].y  = midVal; 
   		layout.annotations[2].y  = midVal; 
   		layout.annotations[3].y  = midVal; 
   		layout.annotations[0].visible = this.props.traceVis[0]; 

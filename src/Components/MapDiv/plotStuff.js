@@ -149,7 +149,7 @@ const baseLineLayout = {
     {
       x:120, 
       y:0, 
-      text: '<b style="color:rgb(150, 255, 2);">      EDITORS </b><b style="color:rgb(255,0,235);">(Size,kB)</b>',
+      text: '<b style="color:rgb(150, 255, 2);">        EDITORS</b><br><b style="color:rgb(255,0,235);">         (Size,kB)</b>',
       font:{family:'courier',size:14,color:'rgb(255, 0, 235)',weight:400}, 
       showarrow: false,
       visible:false,     

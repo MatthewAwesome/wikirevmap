@@ -62,7 +62,7 @@ export default class StatRow extends Component {
 					}
 					onClick = {() => this.props.toggleTrace('contributors')}
 				>
-					contributors{'\n'}{this.props.uniqueEditors}
+					EDITORS{'\n'}{this.props.uniqueEditors}
 				</div>
 				<div 
 					style = {
@@ -85,7 +85,7 @@ export default class StatRow extends Component {
 					}
 					onClick = {() => this.props.toggleTrace('revs')}
 				>
-					edits{'\n'}{this.props.revArray.length}
+					EDITS{'\n'}{this.props.revArray.length}
 				</div>
 				<div style = {
 						{
@@ -104,7 +104,7 @@ export default class StatRow extends Component {
 					}
 					onClick = {() => this.props.toggleTrace('size')}
 				>
-					size{'\n'}{this.props.currentSize}
+					SIZE{'\n'}{this.props.currentSize}
 				</div>
 			</div>
 		)
