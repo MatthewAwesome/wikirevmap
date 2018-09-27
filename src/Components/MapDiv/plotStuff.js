@@ -46,7 +46,7 @@ const baseMapLayout = {
 // Layout for the temporal line chart: 
 const baseLineLayout = {
   height: 80,
-  width:window.innerWidth*0.6+200,
+  width:window.innerWidth*0.48+200,
   plot_bgcolor:"transparent",
   paper_bgcolor:"transparent",
   margin:{l:100,r:100,t:5,b:2},

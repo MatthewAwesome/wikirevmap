@@ -14,7 +14,7 @@ import {
 } from './styles';
 // Inline stying here: 
 var sliderBarStyle = {
-	width:window.innerWidth*0.6+20,  
+	width:window.innerWidth*0.48+20,  
 	height:70,
 	alignItems:'center', 
 	justifyContent:'center', 
@@ -43,7 +43,7 @@ export default class ControlBar extends Component{
 	// To handle browser resize: 
   updateDimensions() {
   	var slab = Object.assign({},this.state.sliderBarStyle); 
-  	slab.width = window.innerWidth * 0.6+20; 
+  	slab.width = window.innerWidth * 0.48+20; 
     this.setState({width: window.innerWidth,height:window.innerHeight,sliderBarStyle:slab});
   }; 
   // Determine if an update is needed: 
