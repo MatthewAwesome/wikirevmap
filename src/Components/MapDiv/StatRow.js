@@ -37,7 +37,6 @@ export default class StatRow extends Component {
   }
 
 	render(){
-		console.log(this.props);
 		// set styles according to traceVis: 
 		return(
 			<div style ={statRowStyle}>

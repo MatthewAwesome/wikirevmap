@@ -25,10 +25,12 @@ export default class AppMain extends Component{
 			randSelected:false, 
 			viewSearchBar:false,
 			pageid:null, 
-			pageurl:null
+			pageurl:null, 
+			trending:true,
 		}; 
-		this.searchResultHandler = this.searchResultHandler.bind(this);
-		this.updateDimensions    = this.updateDimensions.bind(this); 
+		this.searchResultHandler  = this.searchResultHandler.bind(this);
+		this.updateDimensions     = this.updateDimensions.bind(this); 
+		this.toggleTrendingTopics = this.toggleTrendingTopics.bind(this); 
 	};
 	
 	shouldComponentUpdate(nextProps,nextState){
@@ -42,6 +44,9 @@ export default class AppMain extends Component{
 			return true; 
 		}
 	  else if(nextState && nextState.height != this.state.height){
+			return true; 
+		}
+		else if(nextState && nextState.trending != this.state.trending){
 			return true; 
 		}
 		else{
@@ -59,9 +64,17 @@ export default class AppMain extends Component{
   }; 
 
   // This is the is called when a user clicks on a page of interest. We update the map accordingly. 
-	async searchResultHandler(pageid,pageurl,imgurl){
-		await this.setState({pageid:pageid,pageurl:pageurl,imgurl:imgurl}); 
+	searchResultHandler(pageid,pageurl,imgurl){
+		this.setState({pageid:pageid,pageurl:pageurl,imgurl:imgurl}); 
 	}
+
+	// For toggling on/off trending topic view. 
+	toggleTrendingTopics(){
+		var trending = !this.state.trending; 
+		console.log('toggle')
+		this.setState({trending:trending}); 
+	}
+
 
 	// Assembling the App into a single component:  
 	render(){ 
@@ -69,11 +82,14 @@ export default class AppMain extends Component{
 			<div style = {mainStyle}>
 				<TopBar 
 					searchResultHandler = {this.searchResultHandler}
+					trendingToggle      = {this.toggleTrendingTopics}
+					trending            = {this.state.trending}
 				/>
 				<MapDiv 
-					pageid  = {this.state.pageid}
-					pageurl = {this.state.pageurl} 
-					imgurl  = {this.state.imgurl}
+					pageid   = {this.state.pageid}
+					pageurl  = {this.state.pageurl} 
+					imgurl   = {this.state.imgurl}
+					trending = {this.state.trending}
 				/>
 			</div>
 		); 

@@ -72,6 +72,14 @@ const soundButtonStyle = {
 	padding:10,
 }; 
 
+const arrowButtonStyle = {
+	height:"28px",
+	width:"28px",
+	borderRadius:"28px",
+	padding:10,
+	color:'white',
+}; 
+
 const rewindButtonStyle = {
 	height:"28px",
 	width:"28px",
@@ -111,7 +119,7 @@ const titleRowStyle = {
 	height:30, 
 	display:'flex',
 	flexDirection:'row', 
-	justifyContent:'center',  
+	justifyContent:'space-between',  
 	alignItems:'center', 
 }
 
@@ -123,6 +131,7 @@ const titleStyle = {
 	fontWeight:400,
 	textAlign:'center',
 	paddingLeft:10,
+	paddingRight:10,
 }; 
 
 const thumbStyle = {
@@ -187,4 +196,5 @@ export {
 	rewindButtonStyle,
 	mapPlotContainer,
 	mapDivStyle,
+	arrowButtonStyle,
 }

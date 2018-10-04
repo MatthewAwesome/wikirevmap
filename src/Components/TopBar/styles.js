@@ -4,7 +4,7 @@ const topRowStyle = {
 	flexDirection:'row',
 	justifyContent:'space-between', 
 	alignItems:'center', 
-	width:"97%", 
+	width:"100%", 
 	paddingBottom:5, 
 	paddingTop:5, 
 	paddingLeft:5,

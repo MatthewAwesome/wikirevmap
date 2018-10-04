@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import LoadingComponent from './LoadingComponent'; 
 import Plot from 'react-plotly.js';
 import {
@@ -8,6 +9,7 @@ import {
 	titleRowStyle, 
 	mapPlotContainer,
 	mapDivStyle,
+	arrowButtonStyle,
 } from './styles'; 
 import {
 	baseMapLayout,
@@ -26,7 +28,8 @@ import ControlBar from './ControlBar';
 import TimePlot from './TimePlot'; 
 import StatRow  from './StatRow'; 
 import {alphaGray1,alphaGray2,alphaGray3,alphaGray4} from '../../Extras/grays'; 
-
+import {pageviews} from './helperFunctions/pageview';
+import HotTopics from './helperFunctions/HotTopic'; 
 /* Some notes on what we need to do here: 
 
 * Pulling data needs to be broken up. The wait time at present is unacceptable for most 
@@ -72,6 +75,9 @@ class MapDiv extends Component{
 	    vandalList:[], 
 	    title:'',
 	    traceVis:[true,false,false], 
+	    selectedMarkers:[], 
+	    trendingIndex:0, 
+	    trending:[],
   	};
 
 
@@ -109,15 +115,18 @@ class MapDiv extends Component{
 		this.renderTitleBar      = this.renderTitleBar.bind(this); 
 		this.onRewind            = this.onRewind.bind(this); 
 		this.toggleTrace         = this.toggleTrace.bind(this); 
+		this.markerToggle        = this.markerToggle.bind(this);
+		this.stepTrend           = this.stepTrend.bind(this); 
 	}
 
   // To handle browser resize; 
   updateDimensions() {
-  	// Do things with the current window size: 
-  	var divStyle           = Object.assign({},this.state.mapDivStyle); 
-  	var plotStyle          = Object.assign({},this.state.mapPlotContainer); 
-  	var mapLayout          = Object.assign({},this.state.layout); 
-  	var heightCheck        = window.innerHeight < 400 ? 400 : window.innerHeight; 
+  	// Instantiate some variables: 
+  	let divStyle           = Object.assign({},this.state.mapDivStyle); 
+  	let plotStyle          = Object.assign({},this.state.mapPlotContainer); 
+  	let mapLayout          = Object.assign({},this.state.layout); 
+  	let heightCheck        = window.innerHeight < 400 ? 400 : window.innerHeight; 
+  	// Update necessary fields: 
   	divStyle.height        = window.innerHeight-60; 
   	plotStyle.height       = heightCheck-300; 
   	mapLayout.height       = heightCheck-300; 
@@ -133,8 +142,11 @@ class MapDiv extends Component{
   }; 
 
   // Attached UpdateDimensions to our window: 
-  componentDidMount() {
+  async componentDidMount() {
     window.addEventListener("resize", this.updateDimensions);
+    // Get hot topics: 
+    let trending = await HotTopics(); 
+    this.setState({trending:trending});     
   }
 
 	// Update when we receive new data: 
@@ -188,6 +200,12 @@ class MapDiv extends Component{
 		else if(nextState && nextState.traceVis!= this.state.traceVis){
 			return true; 
 		}
+		else if(nextState && nextState.trending != this.state.trending){
+			return true;
+		}
+		else if(nextState && nextState.trendingIndex != this.state.trendingIndex){
+			return true;
+		}
 		// If all else fails, we don't update the thing: 
 		else{
 			return false; 
@@ -199,10 +217,11 @@ class MapDiv extends Component{
 	// 	// This ie executed when the user initial comes into the app.
 		if(prevProps.pageid != this.props.pageid && this.state.cleared == true){
 			// This call pulls the first rev batch: 
-			await this.RevPuller();
+			let pullObject = {pageid:this.props.pageid}
+			await this.RevPuller(pullObject);
 		}
 		// Do we need to clear existing data, users has requested a new page: 
-		else if(prevProps.pageid != this.props.pageid && this.state.cleared == false){
+		else if((prevProps.pageid != this.props.pageid && this.state.cleared == false) || this.state.trendingIndex != prevState.trendingIndex && this.state.cleared == false){
 			var lineData = this.state.lineData; 
 			lineData[0].x = [0,]; 
 			lineData[0].y = [0,]; 
@@ -244,25 +263,37 @@ class MapDiv extends Component{
 				layout:layout, 
 				data:data,
 				traceVis:[true,false,false], 
+				selectedMarkers:[], 
 			});
 		}
-		// Fetching after the clear: 
-		else if(prevState.cleared == false && this.state.cleared == true ){
-			await this.RevPuller(); 
+		// Fetching after the clear when we aren't scanning trending topics: 
+		else if(prevState.cleared == false && this.state.cleared == true && this.props.trending == false ){
+			let pullObject = {pageid:this.props.pageid}
+			await this.RevPuller(pullObject); 
+		}
+		// Fetching another trending topic:  
+		else if(prevState.cleared == false && this.state.cleared == true && this.props.trending == true ){
+			let pullObj  = {title:this.state.trending[this.state.trendingIndex]};  
+	    await this.RevPuller(pullObj); 
 		}
 		// Fetching additional revs... 
-		else if(prevState.cont != this.state.cont && this.state.cont != null){
-			await this.RevPuller(); 
+		else if(prevState.cont != this.state.cont && this.state.cont != null && this.props.trending == false){
+			let pullObject = {pageid:this.props.pageid,cont:this.state.cont}
+			await this.RevPuller(pullObject); 
+		}
+		else if(prevState.cont != this.state.cont && this.state.cont != null && this.props.trending == true){
+			let pullObject = {title:this.state.trending[this.state.trendingIndex],cont:this.state.cont}
+			await this.RevPuller(pullObject); 
 		}
 		// Setting state signifying that we have pulled all the revs for a given page: 
 		else if(prevState.cont != null && this.state.cont == null){
 			// And we tack on end label: 
 			var labels   = this.state.labels; 
 			var tEnd     = new Date(this.state.mapEnds[59]); 
-			labels[599] = tEnd.toGMTString().slice(8,16);
+			labels[599]  = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
 			var tMid     = new Date(this.state.mapEnds[29]); 
-			labels[299] = tMid.toGMTString().slice(8,16); 
+			labels[299]  = tMid.toGMTString().slice(8,16); 
 			this.setState({
 				revPullComplete:true,
 				labels:labels,
@@ -281,16 +312,21 @@ class MapDiv extends Component{
 				anim:this.props.setInterval(this.animate, 5)
 			})
 		}
+		// Called when we get new trending data. Should only happen on page load. 
+		else if(prevState.trending != this.state.trending){
+			let pullObj  = {title:this.state.trending[0]};  
+	    await this.RevPuller(pullObj); 
+		}
 	}
 
-	async RevPuller(){
-		// Here we grab revs in batches of 500 (or less). 
+	async RevPuller(pullObject){
+		// Here we grab revs. 
+
+		// Need to modify to pull trending topics AND user selected pages. 
 		try{
-			// Grab some new revData:
-			var revData    = await GetRevs(this.props.pageid,this.state.cont); 
+			var revData    = await GetRevs(pullObject); 
 			// Bookmark our rev-grabbing spot with a continue: 
 			var cont       = revData.cont == null ? null : revData.cont; 
-
 			// Seeing how big each revision is compared to the previous article. That is, how much did a user add or delete?
 			revData.revs = revData.revs.map( (x,i) => {
 				if(i == 0 && this.state.revArray.length == 0){
@@ -332,6 +368,15 @@ class MapDiv extends Component{
 				var bdayStr = bdayObj.toGMTString().slice(8,16); 
 				var labels  = this.state.labels; 
 				labels[0]   = bdayStr; 
+				// try and pull some page views: 
+				let pageViews = await pageviews.getPerArticlePageviews({
+				  project: 'en.wikipedia',
+				  start: bdayObj,
+				  end: D,
+				  article:'Dud',
+				})
+				let parsedViews = await pageViews.json(); 
+				// get the json
 				// Update the state: 
 				this.setState({
 					bday:bday,
@@ -342,6 +387,7 @@ class MapDiv extends Component{
 					labels:labels,
 					fetching:true, 
 					title:revData.title,
+					pageurl:revData.url,
 				}); 
 			}
 			
@@ -422,16 +468,18 @@ class MapDiv extends Component{
 				// title string: 
 				var annotations = [
 			  	{
-			  		text: revData.title, 
-			  		font:{family:'courier',size:18,color:'white',weight:400}, 
-			  		y:0.99,
+			  		text: 'dude', 
+			  		font:{family:'courier',size:100,color:'white',weight:400}, 
+			  		y:0,
+			  		x:0,
 			  		showarrow:false,
 			  		bgcolor:'black',
 			  		visible:false,
 			  	}
   			]; 
   			var layout = this.state.layout; 
-  			layout.annotations = annotations; 
+  			// layout.annotations = annotations; 
+  			layout.datarevision += 1; 
   			var complete = cont == null ? true:false; 
 				this.setState({
 					revArray:accRevs,
@@ -458,7 +506,7 @@ class MapDiv extends Component{
 			}
 		}
 		catch(error){
-			console.log('Error in search result handler: ', error); 
+			console.log('Error in rev puller: ', error); 
 		}
 	}
 
@@ -611,8 +659,6 @@ class MapDiv extends Component{
 			var maxTimes  = Math.max(...times);
 			var newFrames = []; 
 			var oldFrames = this.state.frameData; 
-
-
 			// Push Elements to new frames: 
 			//for(let i = oldFrames.length; i < oldFrames.length + framesToMake; i++){
 			for(let i = oldFrames.length; i < oldFrames.length + framesToMake; i++){
@@ -664,6 +710,7 @@ class MapDiv extends Component{
 		    var markerOpacities = [];
 		    var userArray       = []; 
 		    var hoverlabels     = []; 
+		    var fullText        = []; 
 		    x.forEach(
 		    	(y,index) => {
 		    		if(y.vandal == false){
@@ -677,11 +724,7 @@ class MapDiv extends Component{
 				      	markerText = markerText + '<b style="color:red;">' + Math.abs(y.totalDiff).toString() + ' bytes deleted</b><br>'; 
 				      } 
 				      else if(y.totalDiff == 0){
-				      	markerText = markerText + '<b style="grey:#4AC948;">' + Math.abs(y.totalDiff).toString() + ' bytes added</b><br>'; 
-				      }
-				      else{
-				      	// console.log(y.totalDiff, typeof y.totalDiff)
-				      	// console.log(y); 
+				      	markerText = markerText + '<b style="color:#4AC948;">' + Math.abs(y.totalDiff).toString() + ' bytes added</b><br>'; 
 				      }
 				      markerText = markerText + '<b>'; 
 				      if(y.city && y.city.length != 0){
@@ -698,7 +741,8 @@ class MapDiv extends Component{
 				      markerSizes.push(markerSize); 
 				      markerColors.push('white');
 				      markerOpacities.push(y.timesArray.length / maxTimes); 	 
-				      userArray.push(y.user);    		
+				      userArray.push(y.user);    	
+				      fullText.push(markerText); 	
 			    	}
 				    else if(y.vandal == true){
 					    var markerSize = Math.log(y.timesArray.length * Math.E) * 4;  
@@ -719,17 +763,20 @@ class MapDiv extends Component{
 				      markerSizes.push(markerSize); 
 				      markerColors.push('red');
 				      markerOpacities.push(y.timesArray.length / maxTimes); 	 
-				      userArray.push(y.user);  			    	
+				      userArray.push(y.user);  
+				      fullText.push(markerText); 			    	
 				    }
 			  	}
 		    )
 		    var dataContainer = [{
 		      type: 'scattergeo',
+		      mode: "markers",
 		      lat: lats,
 		      lon: lons,
 		      hoverinfo: 'text',
 		      hoverlabel:{font:{family:'Courier New',size:14},bgcolor:markerColors,align:'center'},
 		      text: textArray,
+		      textfont:{family:['Courier New',],size:14, color:'white'},
 		      marker: {
 		        size: markerSizes,
 		        line: {
@@ -740,6 +787,7 @@ class MapDiv extends Component{
 		      }, 
 		      dates:tstamps, 
 		      baseSizes:markerSizes, 
+		      fullText:fullText,
 		    }]
 		    return dataContainer
 			}
@@ -811,6 +859,7 @@ class MapDiv extends Component{
 						tstep:tstep,
 						sliderPosition:tstep,
 						layout:layout,
+						selectedMarkers:[], 
 					}); 
 				}
 				else if(tstep % 5 == 0){
@@ -887,7 +936,7 @@ class MapDiv extends Component{
 				var data   = this.state.frameData[roundedVal]; 
 				var layout = Object.assign({},this.state.layout); 
 				layout.datarevision = layout.datarevision + 1; 
-				await this.setState({data:data,sliderPosition:val,anim:null,tstep:val,layout:layout,}); 
+				await this.setState({data:data,sliderPosition:val,anim:null,tstep:val,layout:layout,selectedMarkers:[],}); 
 				this.loopSounds(roundedVal); 
 			}
 			// What if the slider 
@@ -897,11 +946,38 @@ class MapDiv extends Component{
 		}
 	}
 
+	// A function to toogle marker labels on/of. 
+	markerToggle(object){
+		// We have marker text to show: 
+		this.onPause(); 
+		// We can use this function see what else a given user/ip has edited: 
+		// if(object.points){
+		// 	var data            = object.points[0].data; 
+		// 	var layout          = this.state.layout; 
+		// 	var selectedMarkers = this.state.selectedMarkers; 
+		// 	data.text[object.points[0].pointIndex] = data.fullText[object.points[0].pointIndex]; 
+		// 	data.text[selectedMarkers[0]] = ''; 
+		// 	selectedMarkers[0] = object.points[0].pointIndex
+		// 	layout.datarevision += 1; 
+		// 	this.setState({data:[data],layout:layout,selectedMarkers:selectedMarkers}); 
+		// }
+		// // We have nothing to show and a marker to clear:
+		// else if(this.state.selectedMarkers.length > 0){
+		// 	var data            = this.state.data; 
+		// 	var layout          = this.state.layout; 
+		// 	var selectedMarkers = this.state.selectedMarkers; 
+		// 	data[0].text[selectedMarkers[0]] = '';
+		// 	layout.datarevision += 1; 
+		// 	this.setState({data:data,layout:layout,selectedMarkers:[]})
+		// }
+	}
+
 	// This function keeps the map from disappering. 
 	async mapScaler(figure){
 		var layout     = Object.assign({},this.state.layout); 
 		var updateData = false; 
 		var update     = false; 
+		layout.datarevision = layout.datarevision + 1; 
 		// Bounding the upper and lower latitudes. Map will not vertically pan beyong (-40,60)
 		if(figure["geo.center.lat"] != null){
 			if(figure["geo.center.lat"] > 60){
@@ -923,23 +999,43 @@ class MapDiv extends Component{
 		}
 		// Update layout only: 
 		if(update === true && updateData === false){
-			layout.datarevision = layout.datarevision + 1; 
 			await this.setState({layout:layout}); 
 		}
-		// Update layout and data (i.e. resize the markers). 
+		// Update layout and data (i.e. resize the markers). THIS IS PROBLEMATIC. IF THE USER IS ALREADY ZOOMED IN, AND A BUNCH OF EDITS GET ADDED, 
+		// they could be stuck with really BIG mrkers! 
 		else if(update === true && updateData === true){ 
-			var frameData   = this.state.frameData.slice();
-			var data        = this.state.data.slice(); 
-			var markerScale = layout.geo.projection.scale <= 35 ? layout.geo.projection.scale : 25; 
-			for(let f in frameData){
-				frameData[f][0].marker.size = frameData[f][0].baseSizes.map( (x) => {return x*Math.E**((markerScale-1)/10)});
+			// How big is our data> ( if we have more than 2500 markers, we dont' update the size. )
+			var frameData = this.state.frameData.slice();
+			var sizes     = frameData.map( x => x.length);
+			var data      = this.state.data.slice();
+			var maxSizes  = Math.max(...sizes);  
+			// Updating too many markers is too damn slow.  
+			if(maxSizes <= 2500){
+				var markerScale = layout.geo.projection.scale <= 35 ? layout.geo.projection.scale : 25; 
+				for(let f in frameData){
+					frameData[f][0].marker.size = frameData[f][0].baseSizes.map( (x) => {return x*Math.E**((markerScale-1)/10)});
+				}
+				// And make sure to update the current frame!
+				if(data && data[0].marker && data[0].marker.size && data[0].baseSizes){
+					data[0].marker.size = data[0].baseSizes.map((x) => {return x*Math.E**((markerScale-1)/10)});
+				}
+				await this.setState({layout:layout,frameData:frameData,data:data});
 			}
-			// And make sure to update the current frame!
-			if(data && data[0].marker && data[0].marker.size && data[0].baseSizes){
-				data[0].marker.size = data[0].baseSizes.map((x) => {return x*Math.E**((markerScale-1)/10)});
+			// Update the markers so users don't get stuck with big markers AND tons of data. 
+			else if(maxSizes <= 2500 && data[0].marker.size != data[0].baseSizes){
+				for(let f in frameData){
+					for(let p in frameData[f][0].marker.size){
+						frameData[f][0].marker.size[p] = frameData[f][0].baseSizes[p];
+						if(f == 0){
+							 data[0].marker.size[p] = data[0].baseSizes[p]
+						} 
+					}
+				}
+				await this.setState({layout:layout,frameData:frameData,data:data});			
 			}
-			layout.datarevision = layout.datarevision + 1;
-			await this.setState({layout:layout,frameData:frameData,data:data}); 
+			else{
+				await this.setState({layout:layout});
+			} 
 		}
 	}
 
@@ -962,12 +1058,53 @@ class MapDiv extends Component{
 		this.setState({traceVis:traceVis,lineData:lineData}); 
 	}
 
+	stepTrend(direction){
+		// Update trendingIndex and initiate a clear. 
+		if(direction == 'left'){
+			var trending = this.state.trendingIndex - 1; 
+			trending = trending == -1 ? this.state.trending.length-1 : trending; 
+		}
+		else{
+			var trending = this.state.trendingIndex + 1; 
+			trending = trending == this.state.trending.length ? 0 : trending; 
+		}
+
+		this.setState({trendingIndex:trending})
+	}
+	// The title bar will be able to accomodate multiple title, and accomodate trending topic scanninng. 
 	renderTitleBar(){ 
-		return(
-			<div style = {titleRowStyle}>
-			  <a style = {titleStyle} href={this.props.pageurl} target="_blank">{this.state.title}</a>
-			</div>
-		)
+		if(this.props.tending == false){
+			return(
+				<div style = {titleRowStyle}>
+				  <a style = {titleStyle} href={this.props.pageurl} target="_blank">{this.state.title}</a>
+				</div>
+			)
+		}
+		else if(this.state.trending){
+			let index  = this.state.trendingIndex + 1; 
+			let string = `Trending Topic #${index}:`
+			return(
+				<div style = {titleRowStyle}>
+					<FontAwesomeIcon
+						icon='arrow-circle-left'
+						style = {arrowButtonStyle}
+						onClick = { () => this.stepTrend('left')}
+					/>
+					<div style = {titleStyle}>
+						{string}
+				  	<a style = {titleStyle} href={this.state.pageurl} target="_blank">{this.state.trending[this.state.trendingIndex]}</a>
+			  	</div>
+			  	<FontAwesomeIcon
+						icon='arrow-circle-right'
+						style = {arrowButtonStyle}
+						onClick = { () => this.stepTrend('right')}
+					/>
+				</div>
+			)			
+		}
+		else{
+			return(null)
+		}
 	}
 
 	renderStatRow(){
@@ -1019,6 +1156,7 @@ class MapDiv extends Component{
 	        style         = {{width:"100%", height:this.state.mapPlotContainer.height}}
           onInitialized = {(figure) => this.setState(figure)}
           onRelayout    = {this.mapScaler}
+          onClick       = {this.markerToggle}
 	      />
       </div>
 		)

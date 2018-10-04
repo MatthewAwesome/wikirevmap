@@ -1,6 +1,8 @@
  // Some base structures for plotting: 
 
 // The layout for our map: 
+
+// Thinking we should add visibility buttons for markers, etc.
 const baseMapLayout = {
   font:{family:'Courier New',size:18,color:'white'},
   geo:{
@@ -36,6 +38,17 @@ const baseMapLayout = {
   datarevision:0, 
   doubleClick:false,
   dragmode:false,
+  annotations:[
+   {
+     text:"TITLE", 
+     font:{family:'courier',size:18,color:'slategray',weight:400}, 
+     lat:0,
+     lon:0,
+     showarrow:false,
+     bgcolor:'black',
+     visible:false,
+   }
+  ],
 };
 
 // color palette: 

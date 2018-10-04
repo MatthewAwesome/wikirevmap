@@ -23,6 +23,10 @@ import {
   faInfoCircle, 
   faInfo, 
   faUndo,
+  faChartLine, 
+  faFire, 
+  faArrowCircleRight,
+  faArrowCircleLeft,
 } from '@fortawesome/free-solid-svg-icons';
 // Add them to our library. 
 library.add(
@@ -39,6 +43,10 @@ library.add(
 	faInfoCircle, 
 	faInfo, 
 	faUndo, 
+	faChartLine, 
+	faFire, 
+	faArrowCircleRight, 
+	faArrowCircleLeft
 );
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

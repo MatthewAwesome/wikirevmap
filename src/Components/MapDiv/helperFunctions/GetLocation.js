@@ -4,8 +4,7 @@ IP-LOCATION GRABBER
 *************************************************************/
 
 // Setting baseURL depending on build environment: 
-const devMode = process.env.NODE_ENV !== 'production'; 
-const baseURL = devMode ?  "http://10.0.0.201:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
+const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.1.10.164:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
 
 // Assembling the function for export: 
 export default async function GetLocation(userObj){
@@ -16,25 +15,20 @@ export default async function GetLocation(userObj){
     let ipData = await fetch(reqURL); 
     // Parse the response into JSON format. 
     let ipJson = await ipData.json(); 
-    // Clear ipData variable. 
-    ipData = null; 
     // Do we have data, location data?
-    if(typeof ipJson == 'object' && ipJson.longitude && ipJson.latitude){
+    if(ipJson && ipJson != null && typeof ipJson == 'object' && ipJson.longitude && ipJson.latitude){
       var keys = Object.keys(ipJson);  
-      for(let k in keys){ userObj[keys[k]] = ipJson[keys[k]] }; 
-      ipJson = null; 
+      for(let k in keys){userObj[keys[k]] = ipJson[keys[k]]}; 
   		return userObj
     }
     // Crap, we don't have data..  
     else{
-      ipJson = null; 
     	return null 
     }
   }
   // Fuck, we have an error... 
   catch(err){
     console.log('Could not locate IP: ' + userObj.user + '\nDue to error: ' + err)
-    ipJson = null; 
     return null; 
   }
 }

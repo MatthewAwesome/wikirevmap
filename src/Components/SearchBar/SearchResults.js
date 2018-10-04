@@ -42,6 +42,8 @@ export default class SearchResults extends Component {
 							url                 = {element.url}
 							key                 = {index.toString()}
 							resultsClearFun     = {this.props.arrowClickHandler}
+							trending            = {this.props.trending}
+							trendingToggle      = {this.props.trendingToggle}
 						/> 
 					)
 				}///
@@ -56,6 +58,8 @@ export default class SearchResults extends Component {
 							url                 = {element.url}
 							key                 = {index.toString()}
 							resultsClearFun     = {this.props.arrowClickHandler}
+							trending            = {this.props.trending}
+							trendingToggle      = {this.props.trendingToggle}
 						/> 
 					)
 				}

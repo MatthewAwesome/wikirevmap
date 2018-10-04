@@ -2,7 +2,7 @@
 FUNCTION TO GRAB WIKIPEDIA REVISION INFO 
 *************************************************************/
 
-export default async function GetRevs(pageid,cont){
+export default async function GetRevs(pullObj){
   // An output container: 
   var ipArray = []; 
   var revObj= {revs:null}; 
@@ -10,11 +10,18 @@ export default async function GetRevs(pageid,cont){
 
   // We either have a continue or we don't: 
   try{
-  	var queryUrl = 'https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=revisions&pageids=' + pageid + '&rvprop=ids%7Ctimestamp%7Cflags%7Ccomment%7Cuser%7Csize%7Cuserid&rvlimit=500&rvdir=newer'; 
-  	if(cont && cont != null && cont.rvcontinue){
+    if(pullObj.pageid){
+  	 var queryUrl  = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=revisions%7Cinfo&pageids=${pullObj.pageid}&rvprop=ids%7Ctimestamp%7Cflags%7Ccomment%7Cuser%7Csize%7Cuserid&rvlimit=500&rvdir=newer&inprop=url`; 
+  	}
+    else{
+      var title    = encodeURIComponent(pullObj.title); 
+          title    = title.replace(/%20/g,'_'); 
+      var queryUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=revisions%7Cinfo&titles=${title}&rvprop=ids%7Ctimestamp%7Cflags%7Ccomment%7Cuser%7Csize%7Cuserid&rvlimit=500&rvdir=newer&inprop=url`;    
+    }
+    if(pullObj.cont && pullObj.cont != null && pullObj.cont.rvcontinue){
   		// We have a continue: 
-		  var encodedContinue = encodeURIComponent(cont.rvcontinue); 
-      queryUrl = queryUrl + "&rvcontinue=" + encodedContinue; 
+		  var encodedContinue = encodeURIComponent(pullObj.cont.rvcontinue); 
+      queryUrl = queryUrl + `&rvcontinue=${encodedContinue}`; 
   	}
     // Get the response and put it in json form: 
     var revResponse = await fetch(queryUrl); 
@@ -30,6 +37,10 @@ export default async function GetRevs(pageid,cont){
      	var revLength     = jsonified.query.pages[keys[0]].revisions.length; 
      	revObj.revsPulled = revLength; 
      	revObj.revs       = jsonified.query.pages[keys[0]].revisions; 
+      // Getting the URL: 
+      if(jsonified.query.pages[keys[0]].fullurl){
+        revObj.url = jsonified.query.pages[keys[0]].fullurl
+      }
      	// Do the rest of processing outside of this damn thing! 
     } 
     // Clear the revResponse and return our revObject. 

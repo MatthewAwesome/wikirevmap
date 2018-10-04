@@ -9,9 +9,10 @@ export default class PageRow extends Component{
 	constructor(props){
 		super(props); 
 		var bgcolor = props.index % 2 == 0 ? alphaGray3 : alphaGray2; 
-		this.state               = {bgcolor:bgcolor,defaultbg:bgcolor}; 
-		this.prepRow             = this.prepRow.bind(this); 
-		this.clickHandler        = this.clickHandler.bind(this); 
+		this.state            = {bgcolor:bgcolor,defaultbg:bgcolor}; 
+		this.prepRow          = this.prepRow.bind(this); 
+		this.clickHandler     = this.clickHandler.bind(this); 
+		this.selectionHandler = this.selectionHandler.bind(this); 
 	}
 
 	prepRow(){
@@ -28,6 +29,13 @@ export default class PageRow extends Component{
 		return thumbComponent
 	}
 
+	selectionHandler(){
+		this.props.searchResultHandler(this.props.pageid,this.props.url,this.props.imgUrl); 
+		this.props.resultsClearFun();
+		if(this.props.trending == true){
+			this.props.trendingToggle(); 
+		}
+	}
 	clickHandler(event){
 		if(event.type == "mousedown"){
 			this.setState({bgcolor:alphaGray5})
@@ -52,7 +60,7 @@ export default class PageRow extends Component{
 	  				backgroundColor:this.state.bgcolor,  
 	  				paddingLeft:0,
 	  		}}
-				onClick     = { ()      => {this.props.searchResultHandler(this.props.pageid,this.props.url,this.props.imgUrl); this.props.resultsClearFun();}}
+				onClick     = {this.selectionHandler}
 				onMouseDown = { (event) => this.clickHandler(event) }
 				onMouseUp   = { (event) => this.clickHandler(event) }
 			>
