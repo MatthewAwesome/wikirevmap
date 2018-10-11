@@ -4,7 +4,7 @@ IP-LOCATION GRABBER
 *************************************************************/
 
 // Setting baseURL depending on build environment: 
-const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.1.10.164:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
+const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.0.0.201:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
 
 // Assembling the function for export: 
 export default async function GetLocation(userObj){

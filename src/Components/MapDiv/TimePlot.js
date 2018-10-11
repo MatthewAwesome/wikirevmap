@@ -59,6 +59,13 @@ export default class TimePlot extends Component{
   	else if(prevProps && prevProps != this.props){
   		var layout = this.state.layout; 
   		layout.datarevision += 1; 
+  		// update the xaxis: 
+  		layout.xaxis.range[1] = this.props.lineData[1].x.length-1; 
+  		// update the annotation position: 
+  		layout.annotations[1].x = layout.xaxis.range[1]; 
+  		layout.annotations[2].x = layout.xaxis.range[1]; 
+  		layout.annotations[3].x = layout.xaxis.range[1]; 
+
   		// get the value (we use changes in data to change the layout...)
   		var maxEdits   = Math.max(...this.props.lineData[0].y);
   		var roundEdits = maxEdits <= 1 ? 1 : Math.floor(maxEdits); 

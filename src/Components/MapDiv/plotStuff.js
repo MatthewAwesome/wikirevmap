@@ -66,7 +66,7 @@ const baseLineLayout = {
   showlegend: false,
   xaxis : {
     fixedrange: true, 
-    range: [0, 120], 
+    range: [0, 12], 
     showgrid:false,
     zeroline: false,
     zerolinewidth:2,
@@ -171,8 +171,8 @@ const baseLineLayout = {
 }; 
 // rgb(255, 123, 0)
 const traceOne = {
-  x:[0,], 
-  y:[0,], 
+  x:[], 
+  y:[], 
   type: 'scatter',
   mode: 'lines',
   line:{color:'rgb(0, 255, 255)',width:2},
@@ -183,8 +183,8 @@ const traceOne = {
 }; 
 
 const traceTwo = {
-  x:[0,], 
-  y:[0,], 
+  x:[], 
+  y:[], 
   type: 'scatter',
   mode: 'lines',
   line:{color:'rgb(255, 0, 235)',width:2}, 
@@ -195,8 +195,8 @@ const traceTwo = {
 }; 
 
 const traceThree = {
-  x:[0,], 
-  y:[0,], 
+  x:[], 
+  y:[], 
   type: 'scatter',
   mode: 'lines',
   line:{color:'rgb(150, 255, 2)',width:2}, 

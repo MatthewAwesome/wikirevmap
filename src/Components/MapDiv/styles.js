@@ -132,6 +132,8 @@ const titleStyle = {
 	textAlign:'center',
 	paddingLeft:10,
 	paddingRight:10,
+	align:'center',
+	width:"100%",
 }; 
 
 const thumbStyle = {
