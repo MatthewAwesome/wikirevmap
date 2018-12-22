@@ -16,6 +16,8 @@ import {
 	arrowButtonStyle,
 	mobileTitleStyle, 
 	mapDivMobileStyle,
+	mobileTitleFont,
+	mapPlotContainerMobile, 
 } from './styles'; 
 import {
 	baseMapLayout,
@@ -78,6 +80,7 @@ class MapDiv extends Component{
 	    uniqueEditors:0, 
 	    mapDivStyle:mapDivStyle, 
 	    mapPlotContainer:mapPlotContainer, 
+	    mapPlotContainerMobile:mapPlotContainerMobile, 
 	    vandalList:[], 
 	    title:'',
 	    traceVis:[true,false,false], 
@@ -132,20 +135,23 @@ class MapDiv extends Component{
   	let divStyle           = Object.assign({},this.state.mapDivStyle); 
   	let plotStyle          = Object.assign({},this.state.mapPlotContainer); 
   	let mapLayout          = Object.assign({},this.state.layout); 
+  	let mapMobile          = Object.assign({},this.state.mapPlotContainerMobile)
   	let heightCheck        = window.innerHeight < 400 ? 400 : window.innerHeight; 
   	// Update necessary fields: 
   	if(window.innerWidth < 600){
   		divStyle.height        = window.innerHeight-100; 
   		plotStyle.height       = heightCheck-400; 
 	  	mapLayout.height       = heightCheck-400;
+	  	mapMobile.height       = heightCheck-400; 
   	}
   	else{
   		divStyle.height        = window.innerHeight-60; 
 	  	plotStyle.height       = heightCheck-300; 
 	  	mapLayout.height       = heightCheck-300; 
+	  	mapMobile.height       = heightCheck-300; 
   	}
-  	plotStyle.height       = heightCheck-300; 
-  	mapLayout.height       = heightCheck-300; 
+  	// plotStyle.height       = heightCheck-300; 
+  	// mapLayout.height       = heightCheck-300; 
   	mapLayout.datarevision = mapLayout.datarevision + 1; 
   	// And update the state accordingly: 
     this.setState({
@@ -153,6 +159,7 @@ class MapDiv extends Component{
     	height:window.innerHeight,
     	mapDivStyle:divStyle,
     	mapPlotContainer:plotStyle, 
+    	mapPlotContainerMobile:mapmobile, 
     	layout:mapLayout,
     });
   }; 
@@ -328,7 +335,7 @@ class MapDiv extends Component{
 		// Sometimes all the revs get fetch in a single call, and therefore cont never goes to null; this is handled below. 
 		else if(prevState.revPullComplete == false && this.state.revPullComplete == true){
 			var labels   = this.state.labels; 
-			var tEnd     = new Date(this.state.mapEnds[59]);
+			var tEnd     = new Date(this.state.mapEnds[this.state.mapEnds.length-1]); 
 			labels[this.state.lineEnds.length*3-1] = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
 			var tMidIndex = Math.round(this.state.mapEnds.length/2)-1; 
@@ -408,14 +415,16 @@ class MapDiv extends Component{
 				var bdayStr = bdayObj.toGMTString().slice(8,16); 
 				var labels  = this.state.labels; 
 				labels[0]   = bdayStr; 
+
 				// try and pull some page views: 
-				let pageViews = await pageviews.getPerArticlePageviews({
-				  project: 'en.wikipedia',
-				  start: bdayObj,
-				  end: D,
-				  article:'Dud',
-				})
-				let parsedViews = await pageViews.json(); 
+				// let pageViews = await pageviews.getPerArticlePageviews({
+				//   project: 'en.wikipedia',
+				//   start: bdayObj,
+				//   end: D,
+				//   article:'Dud',
+				// })
+				// let parsedViews = await pageViews.json(); 
+
 				this.setState({
 					bday:bday,
 					articleAge:articleAge,
@@ -949,15 +958,18 @@ class MapDiv extends Component{
 				var tstep = 0; 
 			}
 			// Else we check to see if we have more data to display: 
-			else if(this.state.tstep != null && Math.ceil(this.state.tstep/10) <= this.state.frameData.length-1){
+			else if(this.state.tstep != null && Math.ceil(this.state.tstep/12) <= this.state.frameData.length){
 				var tstep = this.state.tstep + 1; 
 			}
-			else if(this.state.tstep != null && Math.ceil(this.state.tstep/10) == this.state.frameData.length){
+			else if(this.state.tstep != null && this.state.tstep >= this.state.lineEnds.length * 3){
+				console.log(this.state.tstep,'clearing')
 				this.props.clearInterval(this.state.anim); 
 				this.setState({anim:null});	
 				var tstep = this.state.tstep; 
 			}
 			else{
+				console.log('stuck')
+				console.log(this.state.tstep,this.state.lineEnds.length,this.state.frameData.length)
 				var tstep = this.state.tstep; 
 			}
 			// We do things with the current tstep: 
@@ -965,22 +977,29 @@ class MapDiv extends Component{
 				if(tstep % 12 == 0){
 					// We update current frame: 
 					var currentFrame = tstep/12; 
-					var lineFrame    = Math.round(tstep/4); 
-					var data         = this.state.frameData[currentFrame];
 					// var lineData     = this.state.lineData[lineFrame]; 
 					// Play thte sounds: 
-					this.loopSounds(currentFrame); 
-					// update the layout: 
-					var layout = this.state.layout; 
-					layout.datarevision += 1; 
-					// update the data: 
-					this.setState({
-						data:data,
-						tstep:tstep,
-						sliderPosition:tstep,
-						layout:layout,
-						selectedMarkers:[], 
-					}); 
+					if(currentFrame > this.state.frameData.length-1){
+						this.props.clearInterval(this.state.anim); 
+						this.setState({anim:null});							
+					}
+					else{
+						var lineFrame = Math.round(tstep/4); 
+						var data = this.state.frameData[currentFrame];
+						this.loopSounds(currentFrame); 
+						// update the layout: 
+						var layout = this.state.layout; 
+						layout.datarevision += 1; 
+						// update the data: 
+						this.setState({
+							data:data,
+							tstep:tstep,
+							sliderPosition:tstep,
+							layout:layout,
+							selectedMarkers:[], 
+						}); 						
+					}
+
 				}
 				else if(tstep % 4 == 0){
 					var lineFrame    = Math.round(tstep/4); 
@@ -994,6 +1013,7 @@ class MapDiv extends Component{
 			}
 		}
 		else{
+			console.log('clearning',this.state.tstep)
 			this.props.clearInterval(this.state.anim); 
 			this.setState({anim:null});		
 		}
@@ -1203,13 +1223,15 @@ class MapDiv extends Component{
 		}
 		else if(this.props.trending == true && this.state.trending != []){
 			let index  = this.state.trendingIndex + 1; 
-			if(window.innerWidth < 600){
+			if(window.innerWidth < 700){
 				var string = `Trending Topic #${index}:\n`; 
 				var style = mobileTitleStyle; 
+				var fontStyle = mobileTitleFont; 
 			}
 			else{
 				var string = `Trending Topic #${index}:\n`;
 				var style = titleRowStyle; 
+				var fontStyle = titleStyle; 
 			}
 			
 			return(
@@ -1219,9 +1241,9 @@ class MapDiv extends Component{
 						style = {arrowButtonStyle}
 						onClick = { () => this.stepTrend('left')}
 					/>
-					<div style = {titleStyle}>
+					<div style = {fontStyle}>
 						{string}
-				  	<a style = {titleStyle} href={this.state.pageurl} target="_blank">{this.state.trending[this.state.trendingIndex]}</a>
+				  	<a style = {fontStyle} href={this.state.pageurl} target="_blank">{this.state.trending[this.state.trendingIndex]}</a>
 			  	</div>
 			  	<FontAwesomeIcon
 						icon='arrow-circle-right'
@@ -1277,13 +1299,19 @@ class MapDiv extends Component{
 	}
 
 	renderMap(){
+		if(this.state.width<700){
+			var mstyle = this.state.mapPlotContainerMobile; 
+		}
+		else{
+			var mstyle = this.state.mapPlotContainer; 
+		}
 		return(
-			<div style = {this.state.mapPlotContainer}>
+			<div style = {mstyle}>
 	      <Plot
 	        data          = {this.state.data}
 	        layout        = {this.state.layout}
 	        config        = {{displayModeBar: false}}
-	        style         = {{width:"100%", height:this.state.mapPlotContainer.height}}
+	        style         = {{width:"100%", height:mstyle.height}}
           onInitialized = {(figure) => this.setState(figure)}
           onRelayout    = {this.mapScaler}
           onClick       = {this.markerToggle}
