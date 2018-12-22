@@ -1,3 +1,7 @@
+/**************************************************************
+	MAPDIV COMPONENT 
+**************************************************************/
+
 import React, { Component } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import LoadingComponent from './LoadingComponent'; 
@@ -10,6 +14,8 @@ import {
 	mapPlotContainer,
 	mapDivStyle,
 	arrowButtonStyle,
+	mobileTitleStyle, 
+	mapDivMobileStyle,
 } from './styles'; 
 import {
 	baseMapLayout,
@@ -128,7 +134,16 @@ class MapDiv extends Component{
   	let mapLayout          = Object.assign({},this.state.layout); 
   	let heightCheck        = window.innerHeight < 400 ? 400 : window.innerHeight; 
   	// Update necessary fields: 
-  	divStyle.height        = window.innerHeight-60; 
+  	if(window.innerWidth < 600){
+  		divStyle.height        = window.innerHeight-100; 
+  		plotStyle.height       = heightCheck-400; 
+	  	mapLayout.height       = heightCheck-400;
+  	}
+  	else{
+  		divStyle.height        = window.innerHeight-60; 
+	  	plotStyle.height       = heightCheck-300; 
+	  	mapLayout.height       = heightCheck-300; 
+  	}
   	plotStyle.height       = heightCheck-300; 
   	mapLayout.height       = heightCheck-300; 
   	mapLayout.datarevision = mapLayout.datarevision + 1; 
@@ -300,9 +315,11 @@ class MapDiv extends Component{
 			var tEnd     = new Date(this.state.mapEnds[this.state.mapEnds.length-1]); 
 			labels[this.state.lineEnds.length*3-1]  = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
-			var tMid     = new Date(this.state.mapEnds[29]); 
+			var tMidIndex = Math.round(this.state.mapEnds.length/2)-1; 
+			var tMid     = new Date(this.state.mapEnds[tMidIndex]); 
 			var midIndex = Math.round((this.state.lineEnds.length * 3)/2) -1; 
 			labels[midIndex]  = tMid.toGMTString().slice(8,16); 
+			console.log(labels,tMid)
 			this.setState({
 				revPullComplete:true,
 				labels:labels,
@@ -314,7 +331,8 @@ class MapDiv extends Component{
 			var tEnd     = new Date(this.state.mapEnds[59]);
 			labels[this.state.lineEnds.length*3-1] = tEnd.toGMTString().slice(8,16);
 			// Get a middle pt. too, 
-			var tMid     = new Date(this.state.mapEnds[29]); 
+			var tMidIndex = Math.round(this.state.mapEnds.length/2)-1; 
+			var tMid     = new Date(this.state.mapEnds[tMidIndex]); 
 			var midIndex = Math.round((this.state.lineEnds.length * 3)/2) -1; 
 			labels[midIndex] = tMid.toGMTString().slice(8,16); 
 			console.log(labels[midIndex],tMid); 
@@ -1142,21 +1160,22 @@ class MapDiv extends Component{
 	}
 
 	toggleTrace(trace){
-		var traceVis = this.state.traceVis; 
+		console.log(trace)
 		var lineData = this.state.lineData; 
 		if(trace == 'revs'){
-			traceVis[0] = !traceVis[0]; 
-			lineData[0].visible = traceVis[0]; 
+			var traceVis = [true,false,false]; 
 		}
 		else if(trace == 'size'){
-			traceVis[1] = !traceVis[1]; 
-			lineData[1].visible = traceVis[1];
+			var traceVis = [false,true,false];
 		}
 		else if(trace == 'contributors'){
 			// update the stat row style (font color, bgcolor):
-			traceVis[2] = !traceVis[2]; 
-			lineData[2].visible = traceVis[2];
+			var traceVis = [false,false,true];
 		}
+		console.log(lineData);
+		lineData[0].visible = traceVis[0];
+		lineData[1].visible = traceVis[1];  
+		lineData[2].visible = traceVis[2];
 		this.setState({traceVis:traceVis,lineData:lineData}); 
 	}
 
@@ -1184,9 +1203,17 @@ class MapDiv extends Component{
 		}
 		else if(this.props.trending == true && this.state.trending != []){
 			let index  = this.state.trendingIndex + 1; 
-			let string = `Trending Topic #${index}:`
+			if(window.innerWidth < 600){
+				var string = `Trending Topic #${index}:\n`; 
+				var style = mobileTitleStyle; 
+			}
+			else{
+				var string = `Trending Topic #${index}:\n`;
+				var style = titleRowStyle; 
+			}
+			
 			return(
-				<div style = {titleRowStyle}>
+				<div style = {style}>
 					<FontAwesomeIcon
 						icon='arrow-circle-left'
 						style = {arrowButtonStyle}

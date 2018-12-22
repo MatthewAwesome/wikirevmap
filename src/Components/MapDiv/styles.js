@@ -122,9 +122,17 @@ const titleRowStyle = {
 	justifyContent:'space-between',  
 	alignItems:'center', 
 }
+const mobileTitleStyle = {
+	width:"100%", 
+	height:'flex', 
+	display:'flex',
+	flexDirection:'row', 
+	justifyContent:'space-between',  
+	alignItems:'flex-start', 
+}
 
 const titleStyle = {
-	height:30, 
+	height:'flex', 
 	color:'white', 
 	fontFamily:'courier', 
 	fontSize:24, 
@@ -170,6 +178,15 @@ const mapDivStyle = {
 	height:window.innerHeight-60,
 }; 
 
+const mapDivMobileStyle = {
+	width: "100%",
+	display:'flex', 
+	flexDirection:'column',
+	justifyContent:'flex-start', 
+	alignItems:'center', 
+	height:window.innerHeight-100,
+}; 
+
 const mapPlotContainer = {
 	width:"100%",
 	display:'flex',
@@ -199,4 +216,6 @@ export {
 	mapPlotContainer,
 	mapDivStyle,
 	arrowButtonStyle,
+	mobileTitleStyle, 
+	mapDivMobileStyle,
 }
