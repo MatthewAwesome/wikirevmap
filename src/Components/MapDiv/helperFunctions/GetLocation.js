@@ -16,6 +16,7 @@ export default async function GetLocation(userObj){
     headers.append("Access-Control-Allow-Origin","*"); 
     let ipData = await fetch(reqURL,headers); 
     // Parse the response into JSON format. 
+    console.log(ipData)
     let ipJson = await ipData.json(); 
     // Do we have data, location data?
     if(ipJson && ipJson != null && typeof ipJson == 'object' && ipJson.longitude && ipJson.latitude){
