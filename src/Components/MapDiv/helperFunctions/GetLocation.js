@@ -12,7 +12,9 @@ export default async function GetLocation(userObj){
     // Replacing x's with zeros. The x's jam up the server and trigger errors. 
     let reqURL = baseURL + encodeURIComponent(userObj.user.replace(/x/g,'0')); 
     // Fetch the IP. 
-    let ipData = await fetch(reqURL); 
+    let headers = await new Headers(); 
+    headers.append("Access-Control-Allow-Origin","*"); 
+    let ipData = await fetch(reqURL,headers); 
     // Parse the response into JSON format. 
     let ipJson = await ipData.json(); 
     // Do we have data, location data?
