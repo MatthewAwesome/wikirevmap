@@ -23,7 +23,7 @@
     "ify-loader": "^1.1.0",
     "internal-ip": "^3.0.1",
     "mini-css-extract-plugin": "^0.4.2",
-    "node-sass": "^4.9.3",
+    "node-sass": "^4.13",
     "postcss-loader": "^3.0.0",
     "react-flag-icon-css": "^1.0.24",
     "sass-loader": "^7.1.0",

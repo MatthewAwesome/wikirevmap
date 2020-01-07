@@ -4,7 +4,7 @@ IP-LOCATION GRABBER
 *************************************************************/
 
 // Setting baseURL depending on build environment: 
-const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.0.0.201:8080/json/":"https://agile-garden-37716.herokuapp.com/json/"; 
+const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.0.0.201:5000/ip/":"https://blooming-stream-19964.herokuapp.com/ip/"; 
 
 // Assembling the function for export: 
 export default async function GetLocation(userObj){
@@ -12,9 +12,7 @@ export default async function GetLocation(userObj){
     // Replacing x's with zeros. The x's jam up the server and trigger errors. 
     let reqURL = baseURL + encodeURIComponent(userObj.user.replace(/x/g,'0')); 
     // Fetch the IP. 
-    let headers = await new Headers(); 
-    headers.append("Access-Control-Allow-Origin","*"); 
-    let ipData = await fetch(reqURL,headers); 
+    let ipData = await fetch(reqURL); 
     // Parse the response into JSON format. 
     console.log(ipData)
     let ipJson = await ipData.json(); 
