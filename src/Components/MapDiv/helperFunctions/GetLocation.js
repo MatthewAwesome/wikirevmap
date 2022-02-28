@@ -4,8 +4,8 @@ IP-LOCATION GRABBER
 *************************************************************/
 
 // Setting baseURL depending on build environment: 
-const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.0.0.201:5000/ip/":"https://blooming-stream-19964.herokuapp.com/ip/"; 
-
+// const baseURL = process.env.NODE_ENV !== 'production' ?  "http://10.0.0.201:5000/ip/":"https://blooming-stream-19964.herokuapp.com/ip/"; 
+const baseURL = process.env.NODE_ENV !== 'production' ?  "https://blooming-stream-19964.herokuapp.com/ip/":"https://blooming-stream-19964.herokuapp.com/ip/"; 
 // Assembling the function for export: 
 export default async function GetLocation(userObj){
   try{

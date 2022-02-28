@@ -26,7 +26,7 @@ export default class AppMain extends Component{
 			viewSearchBar:false,
 			pageid:null, 
 			pageurl:null, 
-			trending:true,
+			trending:false,
 		}; 
 		this.searchResultHandler  = this.searchResultHandler.bind(this);
 		this.updateDimensions     = this.updateDimensions.bind(this); 
@@ -72,7 +72,9 @@ export default class AppMain extends Component{
 	toggleTrendingTopics(){
 		var trending = !this.state.trending; 
 		console.log('toggle')
-		this.setState({trending:trending}); 
+		// We doing want this to show up! 
+		// this.setState({trending:trending});
+		this.setState({trending:false});
 	}
 
 
