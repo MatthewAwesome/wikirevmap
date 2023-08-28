@@ -17,7 +17,9 @@ export default async function GetRevs(pullObj){
     else{
       var title     = encodeURIComponent(pullObj.title); 
           title     = title.replace(/%20/g,'_'); 
-      var startTime = pullObj.rvstart ? '&rvstart='+encodeURIComponent(pullObj.rvstart) : ''; 
+      console.log(title)
+      var startTime = pullObj.rvstart ? '&rvstart='+encodeURIComponent(pullObj.rvstart) : '';
+      console.log(startTime) 
       var queryUrl  = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=revisions%7Cinfo&titles=${title}&rvprop=ids%7Ctimestamp%7Cflags%7Ccomment%7Cuser%7Csize%7Cuserid&rvlimit=500${startTime}&rvdir=newer&inprop=url`;    
     }
     // Do we have a continue?

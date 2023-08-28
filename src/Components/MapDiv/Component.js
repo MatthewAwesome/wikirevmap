@@ -159,7 +159,7 @@ class MapDiv extends Component{
     	height:window.innerHeight,
     	mapDivStyle:divStyle,
     	mapPlotContainer:plotStyle, 
-    	mapPlotContainerMobile:mapmobile, 
+    	mapPlotContainerMobile:mapMobile, 
     	layout:mapLayout,
     });
   }; 
@@ -169,7 +169,9 @@ class MapDiv extends Component{
     window.addEventListener("resize", this.updateDimensions);
     // Get hot topics: 
     let trending = await HotTopics(); 
-    this.setState({trending:trending});     
+	console.log(trending)
+    this.setState({trending:trending});
+	// Use the trending array set the page id     
   }
 
 	// Update when we receive new data: 
@@ -272,8 +274,8 @@ class MapDiv extends Component{
 				fetching:false, 
 				cleared:true,
 				cont:null, 
-		    mapEnds:null, 
-		    lineEnds:null,
+		    	mapEnds:null, 
+		    	lineEnds:null,
 				labels:{}, 
 				sliderPosition:0, 
 				anim:null, 
@@ -300,9 +302,10 @@ class MapDiv extends Component{
 		}
 		// Fetching another trending topic:  
 		else if(prevState.cleared == false && this.state.cleared == true && this.props.trending == true ){
-			let date     = new Date(); date.setFullYear(date.getFullYear()-1);
+			// let date     = new Date(); date.setFullYear(date.getFullYear()-1);
+			let date = new Date('2001-01-15T00:00:00');
 			let pullObj  = {title:this.state.trending[this.state.trendingIndex],rvstart:date.toISOString()};  
-	    await this.RevPuller(pullObj); 
+	    	await this.RevPuller(pullObj); 
 		}
 		// Fetching additional revs... 
 		else if(prevState.cont != this.state.cont && this.state.cont != null && this.props.trending == false){
@@ -312,7 +315,7 @@ class MapDiv extends Component{
 		}
 		else if(prevState.cont != this.state.cont && this.state.cont != null && this.props.trending == true){
 			let date     = new Date(); date.setFullYear(date.getFullYear()-1);
-			let pullObject = {title:this.state.trending[this.state.trendingIndex],cont:this.state.cont,rvstart:date.toISOString()}
+			let pullObject = {title:this.state.trending[this.state.trendingIndex],cont:this.state.cont}
 			await this.RevPuller(pullObject); 
 		}
 		// Setting state signifying that we have pulled all the revs for a given page: 
@@ -350,9 +353,11 @@ class MapDiv extends Component{
 		// Called when we get new trending data. Should only happen on page load. 
 		else if(prevState.trending != this.state.trending){
 			// Establish a date a subtract one year. 
-			let date     = new Date(); date.setFullYear(date.getFullYear()-1);
+			console.log('pulling trending revs')
+			// let date     = new Date(); date.setFullYear(date.getFullYear()-1);
+			let date = new Date('2001-01-15T00:00:00');
 			let pullObj  = {title:this.state.trending[0],rvstart:date.toISOString()};  
-	    await this.RevPuller(pullObj); 
+	    	await this.RevPuller(pullObj); 
 		}
 	}
 
@@ -441,11 +446,16 @@ class MapDiv extends Component{
 			// Concatenating revs, and getting some stats from them:  
 			var currentSize,uniqueEditors,accRevs,newRevs; 
 			newRevs       = revData.revs; 
-			// AccRevs dos 
+			// Accumulate the revs we get with each call of the Wikipedia API: 
 			accRevs       = this.state.revArray.concat(revData.revs);
-			uniqueEditors = accRevs.map(x => x.user).filter(this.removeDuplicates).length;  
-			currentSize   = accRevs[accRevs.length-1].size/1000; 
-			currentSize      = currentSize.toString(); 
+			// Filter the revs to identify unique editors. 
+			uniqueEditors = accRevs.map(x => x.user).filter(this.removeDuplicates).length;
+			// Keeping track of the size of the article, too. This makes for cool visualization. 
+			// We divide by 1000; size field from wiki api is bytes, and we want to display in kB.    
+			currentSize   = Math.round(accRevs[accRevs.length-1].size/1000); 
+			// Make it a string to render it as text. 
+			currentSize   = currentSize.toString(); 
+			// But we don't want a decimal here, so we chop off the decimal portion (e.g. 120.32 becomes 120)
 			if(currentSize.indexOf('.') != -1 && currentSize.indexOf('.') >= 4 ){
 				currentSize = currentSize.slice(0,currentSize.indexOf('.')); 
 			}
@@ -459,7 +469,7 @@ class MapDiv extends Component{
 			var framesToMake = this.getNumberOfFrames(lastTime); 
 
 			// Cleaning the revs for mapping. revData.revs will be merged with this.state.revArray. 
-      revData.revs  = await ProcessIpRevs(revData.revs,this.state.ipRevArray); 
+      		revData.revs  = await ProcessIpRevs(revData.revs,this.state.ipRevArray); 
 
 			// This looks for vandalism and tabulates it: newVandals is an object {vandalList:[],vandalCound:int}. 
 			var newVandals = await this.findVandals(newRevs,this.state.vandalList); 
@@ -494,8 +504,8 @@ class MapDiv extends Component{
 				}
 			); 
 	
-      // Make desired number of line frames: 	
-      var lineFrames = this.getLineFrames(accRevs,framesToMake.lineFrames); 
+      		// Make desired number of line frames: 	
+     		 var lineFrames = this.getLineFrames(accRevs,framesToMake.lineFrames); 
 			// Make/update frames: 
 			var frames = this.framifyData(revData.revs,framesToMake.mapFrames,newVandals); 
 			// we update labels again: 
@@ -548,8 +558,8 @@ class MapDiv extends Component{
 		let tSpan   = end-start; 
 		let dayMs   = 8.64e+7; 
 		let weekMs  = dayMs *7; 
-		let monthMs = weekMs * 4; 
-		let yearMs  = monthMs * 12; 
+		let monthMs = dayMs * 31; 
+		let yearMs  = dayMs * 365; 
 		// Is it a month or less?
 		if(tSpan<=monthMs){
 			var tDiff = dayMs; 
@@ -655,11 +665,11 @@ class MapDiv extends Component{
 	}
 
 	// this function serves as a callback to array.filter()
-  removeDuplicates( item, index, inputArray ){
-    if(item != undefined){
-      return inputArray.indexOf(item) == index;
-    }
-  } 
+	removeDuplicates( item, index, inputArray ){
+		if(item != undefined){
+			return inputArray.indexOf(item) == index;
+		}
+	} 
 
 	// A function to determine how many frames we can assemble with the most recently pulled rev batch: 
 	getNumberOfFrames(lastTime){
@@ -1328,6 +1338,7 @@ class MapDiv extends Component{
 		if(this.state.fetching == true){
 			return(
 				<div style = {this.state.mapDivStyle}>
+					{this.renderTitleBar()}
 					<LoadingComponent/>
 				</div>
 			)
@@ -1361,13 +1372,14 @@ class MapDiv extends Component{
 					{this.renderTitleBar()}
 					{this.renderMap()}
 		      {this.renderControlBar()}
-					}
+					
 		    </div>
 	    )			
 		}
 		else{
 			return(
 				<div style = {this.state.mapDivStyle}>
+					{this.renderTitleBar()}
 					<LoadingComponent/>
 				</div>
 			)

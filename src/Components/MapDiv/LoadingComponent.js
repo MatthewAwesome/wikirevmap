@@ -39,7 +39,8 @@ export default class LoadingComponent extends Component{
 		return(
 			<div style = {loadingStyle}>
 					<ReactLoading type={'bars'} color={'#ffffff'} />
-					Fetching the goods...
+					<p>Fetching the goods...</p>
+					<p>(Some pages take a while to load, especially those beseiged with a barrage of edits)</p>
 			</div>
 		)
 	}; 

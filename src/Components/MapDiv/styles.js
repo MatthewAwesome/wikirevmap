@@ -2,7 +2,7 @@
 import {alphaGray1,alphaGray2,alphaGray3,alphaGray4,alphaGray5} from '../../Extras/grays'; 
 
 const loadingStyle = {
-	height:"100%", 
+	height:"60%", 
 	width:"100%", 
 	display:'flex', 
 	flexDirection:'column', 

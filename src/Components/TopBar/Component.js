@@ -71,6 +71,7 @@ export default class TopBar extends Component {
 					onClick = { () => this.props.trendingToggle() }
 					/>
 					<span style = {{width:10}}/>
+					<a href = "https://medium.com/@matthew.p.ellis23/wikirevmap-mapping-wikipedias-anonymous-edits-over-space-and-time-2ee1ba18ac6c">
 					<FontAwesomeIcon
 						icon="info"
 						style = { {
@@ -84,6 +85,7 @@ export default class TopBar extends Component {
 						}
 					}
 					/>
+					</a>
 				</div>
 			</div>
 		)
