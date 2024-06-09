@@ -5,7 +5,6 @@
 // IMPORTING STUFF: 
 import React, { Component } from 'react';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"; 
-import FlagIcon from '../Extras/flag.js'; 
 
 // Bring in our Components: 
 import TopBar from '../Components/TopBar/Component'; 
@@ -26,7 +25,7 @@ export default class AppMain extends Component{
 			viewSearchBar:false,
 			pageid:null, 
 			pageurl:null, 
-			trending:true,
+			trending:false,
 		}; 
 		this.searchResultHandler  = this.searchResultHandler.bind(this);
 		this.updateDimensions     = this.updateDimensions.bind(this); 

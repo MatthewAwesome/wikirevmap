@@ -167,10 +167,12 @@ class MapDiv extends Component{
   // Attached UpdateDimensions to our window: 
   async componentDidMount() {
     window.addEventListener("resize", this.updateDimensions);
-    // Get hot topics: 
-    let trending = await HotTopics(); 
-	console.log(trending)
-    this.setState({trending:trending});
+	if (this.props.trending == true){
+		// Get hot topics: 
+		let trending = await HotTopics(); 
+		console.log(trending)
+		this.setState({trending:trending});
+	}
 	// Use the trending array set the page id     
   }
 
